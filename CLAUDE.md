@@ -2,6 +2,14 @@
 
 Reusable Claude Code custom skills for configuration management. Install by symlinking or copying into any project's `.claude/skills/` directory.
 
+## Setup
+
+After cloning, enable the Git hooks:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Key Config Files
 
 | File                                  | Purpose                                                               |
