@@ -62,6 +62,8 @@ your-project/
             └── SKILL.md
 ```
 
+After running `/cc-init`, additional files are created in your project (see [What the skills create and check](#what-the-skills-create-and-check)).
+
 ## Usage
 
 ### `/cc-init` — Bootstrap a new project
@@ -84,10 +86,13 @@ The skill will:
 2. **Ask** targeted questions about anything it can’t determine from the directory contents.
 3. **Create** these files:
    - `.claude/settings.json` — permissions, hooks (if a formatter was detected), cost-optimization env vars
-   - `CLAUDE.md` — slim project instructions (typically 20–40 lines)
+   - `CLAUDE.md` — slim project instructions (typically 20–40 lines), including a Key Config Files table
    - `AGENTS.md` — only if a multi-tool AI environment is detected or mentioned
    - `.gitignore` additions for personal Claude Code files
-4. **Summarize** what was created, what was left out, and what to do next.
+   - `scripts/sync-config-table.sh` — keeps the Key Config Files table in CLAUDE.md in sync with the filesystem
+   - `.githooks/pre-commit` — runs the sync script before each commit
+4. **Activate** the git hooks directory: `git config core.hooksPath .githooks` (run automatically, once per clone).
+5. **Summarize** what was created, what was left out, and what to do next.
 
 It deliberately does **not** set up MCP servers, create skills, or generate content it can’t verify. Those decisions are premature for an empty project.
 
@@ -134,13 +139,15 @@ Ongoing:  /cc-optimize                 ← Periodic hygiene checks
 
 ### Configuration files
 
-| File | Created by | Purpose |
-|---|---|---|
-| `CLAUDE.md` | `/cc-init` | Project instructions, loaded every message (target: 40–80 lines) |
-| `AGENTS.md` | `/cc-init` | Vendor-neutral agent instructions (if multi-tool environment) |
-| `.claude/settings.json` | `/cc-init` | Permissions, hooks, environment variables |
-| `.claude/skills/*` | manual | Recurring workflows (audited by `/cc-optimize`) |
-| `.mcp.json` | manual | MCP server configuration (audited by `/cc-optimize`) |
+| File                           | Created by | Purpose                                                          |
+| ------------------------------ | ---------- | ---------------------------------------------------------------- |
+| `CLAUDE.md`                    | `/cc-init` | Project instructions, loaded every message (target: 40–80 lines) |
+| `AGENTS.md`                    | `/cc-init` | Vendor-neutral agent instructions (if multi-tool environment)    |
+| `.claude/settings.json`        | `/cc-init` | Permissions, hooks, environment variables                        |
+| `scripts/sync-config-table.sh` | `/cc-init` | Keeps the Key Config Files table in CLAUDE.md in sync            |
+| `.githooks/pre-commit`         | `/cc-init` | Runs the sync script before each commit                          |
+| `.claude/skills/*`             | manual     | Recurring workflows (audited by `/cc-optimize`)                  |
+| `.mcp.json`                    | manual     | MCP server configuration (audited by `/cc-optimize`)             |
 
 ### Key best practices applied
 
@@ -150,6 +157,7 @@ Ongoing:  /cc-optimize                 ← Periodic hygiene checks
 - **Formatter hooks**: deterministic PostToolUse hooks beat instructions like "always run prettier" — the hook runs every time, the instruction might be ignored.
 - **Cost-optimization defaults**: auto-compact at 50% instead of the default 83%, capped thinking tokens, optional Haiku subagents.
 - **Verification loops**: test commands in CLAUDE.md so Claude can verify its own work (2–3× quality improvement).
+- **Key Config Files auto-sync**: a pre-commit hook keeps the config file table in CLAUDE.md current — new files get a `TODO` placeholder, deleted files are removed automatically. Uses `.githooks/` (no Husky dependency). Requires one-time activation per clone: `git config core.hooksPath .githooks`.
 
 ## Compatibility
 
