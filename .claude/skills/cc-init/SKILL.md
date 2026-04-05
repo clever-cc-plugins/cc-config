@@ -143,6 +143,11 @@ Structure:
 - Don't commit secrets or credentials to git
 - Don't use --force flags — fix the underlying issue instead
 
+## Learnings
+
+When the user corrects a mistake or points out a recurring issue, append a one-line
+summary to .claude/learnings.md. Don't modify CLAUDE.md directly.
+
 ## Compact Instructions
 
 When compacting, preserve: list of modified files, current test status, open TODOs, and key decisions made.
@@ -376,7 +381,10 @@ After creating all files, give the user a concise summary:
    - The pre-commit hook requires a one-time activation per clone: `git config core.hooksPath .githooks`
    - This command was already run for the current clone, but collaborators or fresh clones need to run it too.
    - Suggest documenting it in the project README's setup instructions.
-6. Suggest committing the new config files to git.
+6. Explain the Learnings mechanism:
+   - When the user corrects a mistake, Claude appends a one-line summary to `.claude/learnings.md` instead of modifying CLAUDE.md directly.
+   - This file grows uncurated over time. Running `/cc-optimize` reviews it and proposes promoting recurring patterns into CLAUDE.md or skills, and deleting one-off entries.
+7. Suggest committing the new config files to git.
 
 ## What NOT to do
 

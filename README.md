@@ -86,13 +86,13 @@ The skill will:
 2. **Ask** targeted questions about anything it can’t determine from the directory contents.
 3. **Create** these files:
    - `.claude/settings.json` — permissions, hooks (if a formatter was detected), cost-optimization env vars
-   - `CLAUDE.md` — slim project instructions (typically 20–40 lines), including a Key Config Files table
+   - `CLAUDE.md` — slim project instructions (typically 20–40 lines), including a Key Config Files table and a Learnings section
    - `AGENTS.md` — only if a multi-tool AI environment is detected or mentioned
    - `.gitignore` additions for personal Claude Code files
    - `scripts/sync-config-table.sh` — keeps the Key Config Files table in CLAUDE.md in sync with the filesystem
    - `.githooks/pre-commit` — runs the sync script before each commit
 4. **Activate** the git hooks directory: `git config core.hooksPath .githooks` (run automatically, once per clone).
-5. **Summarize** what was created, what was left out, and what to do next.
+5. **Summarize** what was created, what was left out, and what to do next — including an explanation of the Learnings mechanism.
 
 It deliberately does **not** set up MCP servers, create skills, or generate content it can’t verify. Those decisions are premature for an empty project.
 
@@ -114,12 +114,13 @@ Or focused on a specific area:
 
 The skill will:
 
-1. **Inventory** every configuration file, the project’s tech stack, and available context (code, docs, OpenSpec specs).
-2. **Analyze** against best practices, checking for bloat, missing essentials, security gaps, cost optimization opportunities, and multi-tool consistency.
-3. **Present** findings grouped as must fix / should fix / nice to have, with explanations for each.
-4. **Wait for your approval** before changing anything.
-5. **Apply** approved changes with before/after summaries.
-6. **Report** metrics (e.g., "CLAUDE.md: 247 lines → 62 lines").
+1. **Inventory** every configuration file, the project’s tech stack, and available context (code, docs, OpenSpec specs). This now includes `.claude/learnings.md` and reports the number of entries it contains.
+2. **Analyze** against best practices, checking for bloat, missing essentials (including a Learnings section), security gaps, cost optimization opportunities, and multi-tool consistency.
+3. **Review learnings**: if `.claude/learnings.md` exists, group entries into recurring patterns vs. one-offs and propose promoting patterns into CLAUDE.md, a skill, or a hook — then deleting resolved entries.
+4. **Present** findings grouped as must fix / should fix / nice to have, with explanations for each.
+5. **Wait for your approval** before changing anything.
+6. **Apply** approved changes with before/after summaries.
+7. **Report** metrics (e.g., "CLAUDE.md: 247 lines → 62 lines", "Learnings: 8 entries → 0").
 
 ### Recommended workflow
 
@@ -139,15 +140,16 @@ Ongoing:  /cc-optimize                 ← Periodic hygiene checks
 
 ### Configuration files
 
-| File                           | Created by | Purpose                                                          |
-| ------------------------------ | ---------- | ---------------------------------------------------------------- |
-| `CLAUDE.md`                    | `/cc-init` | Project instructions, loaded every message (target: 40–80 lines) |
-| `AGENTS.md`                    | `/cc-init` | Vendor-neutral agent instructions (if multi-tool environment)    |
-| `.claude/settings.json`        | `/cc-init` | Permissions, hooks, environment variables                        |
-| `scripts/sync-config-table.sh` | `/cc-init` | Keeps the Key Config Files table in CLAUDE.md in sync            |
-| `.githooks/pre-commit`         | `/cc-init` | Runs the sync script before each commit                          |
-| `.claude/skills/*`             | manual     | Recurring workflows (audited by `/cc-optimize`)                  |
-| `.mcp.json`                    | manual     | MCP server configuration (audited by `/cc-optimize`)             |
+| File                           | Created by       | Purpose                                                                     |
+| ------------------------------ | ---------------- | --------------------------------------------------------------------------- |
+| `CLAUDE.md`                    | `/cc-init`       | Project instructions, loaded every message (target: 40–80 lines)            |
+| `AGENTS.md`                    | `/cc-init`       | Vendor-neutral agent instructions (if multi-tool environment)               |
+| `.claude/settings.json`        | `/cc-init`       | Permissions, hooks, environment variables                                   |
+| `.claude/learnings.md`         | auto (by Claude) | One-line corrections Claude appends instead of modifying CLAUDE.md directly |
+| `scripts/sync-config-table.sh` | `/cc-init`       | Keeps the Key Config Files table in CLAUDE.md in sync                       |
+| `.githooks/pre-commit`         | `/cc-init`       | Runs the sync script before each commit                                     |
+| `.claude/skills/*`             | manual           | Recurring workflows (audited by `/cc-optimize`)                             |
+| `.mcp.json`                    | manual           | MCP server configuration (audited by `/cc-optimize`)                        |
 
 ### Key best practices applied
 
@@ -158,6 +160,7 @@ Ongoing:  /cc-optimize                 ← Periodic hygiene checks
 - **Cost-optimization defaults**: auto-compact at 50% instead of the default 83%, capped thinking tokens, optional Haiku subagents.
 - **Verification loops**: test commands in CLAUDE.md so Claude can verify its own work (2–3× quality improvement).
 - **Key Config Files auto-sync**: a pre-commit hook keeps the config file table in CLAUDE.md current — new files get a `TODO` placeholder, deleted files are removed automatically. Uses `.githooks/` (no Husky dependency). Requires one-time activation per clone: `git config core.hooksPath .githooks`.
+- **Learnings graduation**: when Claude makes a mistake, it appends a one-line correction to `.claude/learnings.md` instead of editing CLAUDE.md directly. Running `/cc-optimize` reviews the file: recurring patterns graduate into CLAUDE.md rules, skills, or hooks; one-off entries get deleted. Keeps CLAUDE.md stable between audits.
 
 ## Compatibility
 
