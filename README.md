@@ -1,6 +1,6 @@
 # claude-code-config-skills
 
-Two Claude Code skills for setting up and maintaining a best-practice Claude Code configuration.
+Three Claude Code skills for setting up and maintaining a best-practice Claude Code configuration.
 
 **`/cc-init`** bootstraps a lean configuration for a new or unconfigured project — a more opinionated alternative to the built-in `/init`.
 
@@ -11,6 +11,25 @@ Two Claude Code skills for setting up and maintaining a best-practice Claude Cod
 All three skills work for software projects **and** content projects (static sites, article collections, documentation sets backed by a shared knowledge base). Detection covers code toolchains (npm, cargo, pip, composer, go, …) and content toolchains (Hugo, Jekyll, Astro, Eleventy, MkDocs, Vale, markdownlint).
 
 All three skills are grounded in the consolidated recommendations from the [official Claude Code docs](https://code.claude.com/docs/en/best-practices), [Anthropic's engineering blog](https://www.anthropic.com/engineering), community configurations, and academic research on agent instruction design.
+
+## Table of Contents
+
+- [What problem do these skills solve?](#what-problem-do-these-skills-solve)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [`/cc-init` — Bootstrap a new project](#cc-init--bootstrap-a-new-project)
+  - [`/cc-optimize` — Audit and improve an existing setup](#cc-optimize--audit-and-improve-an-existing-setup)
+  - [`/cc-update` — Keep skills current](#cc-update--keep-skills-current)
+  - [Recommended workflow](#recommended-workflow)
+- [Working with design systems](#working-with-design-systems)
+  - [The two design artifacts and where they live](#the-two-design-artifacts-and-where-they-live)
+  - [Ordering guideline](#ordering-guideline)
+- [What the skills create and check](#what-the-skills-create-and-check)
+  - [Configuration files](#configuration-files)
+  - [Key best practices applied](#key-best-practices-applied)
+- [Compatibility](#compatibility)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## What problem do these skills solve?
 
