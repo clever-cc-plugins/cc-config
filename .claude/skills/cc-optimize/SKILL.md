@@ -40,6 +40,7 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - Build/test/lint commands (scripts in package.json, Makefile targets, etc.)
 - Formatter and linter configs (.prettierrc, .eslintrc, phpcs.xml, rustfmt.toml, etc.)
 - CI/CD configuration
+- Content-project artifacts: static-site configs (`hugo.toml`, `_config.yml`, `astro.config.*`, `mkdocs.yml`), prose tooling (`.vale.ini`, `.markdownlint.*`), shared knowledge bases or style guides referenced from CLAUDE.md
 - OpenSpec artifacts (`openspec/` directory, `openspec/project.md`, change specs)
 - Documentation (`docs/`, `README.md`, architecture docs)
 - Directory structure and apparent architecture patterns
@@ -112,7 +113,7 @@ Check for these anti-patterns:
 
 **Hooks (Claude Code):**
 
-- Is there a PostToolUse formatter hook? If a formatter exists in the project but no hook runs it, this is a high-impact gap.
+- Is there a PostToolUse formatter hook? If a formatter exists in the project but no hook runs it, this is a high-impact gap. Valid formatter targets include code formatters (prettier, ruff, rustfmt, gofmt, php-cs-fixer) and Markdown formatters (prettier on `.md`, `markdownlint --fix`) — don't skip the audit just because the project produces content rather than code.
 - Is there a PreToolUse hook protecting sensitive files? (defense in depth beyond permissions.deny)
 - Do all hooks use `|| true` for graceful degradation?
 - Are hooks doing "block at submit" rather than "block at write"? (fewer interrupts, smoother flow)

@@ -6,6 +6,8 @@ Two Claude Code skills for setting up and maintaining a best-practice Claude Cod
 
 **`/cc-optimize`** audits and improves an existing configuration against current best practices — useful after a project has grown, or periodically to prevent config drift.
 
+Both skills work for software projects **and** content projects (static sites, article collections, documentation sets backed by a shared knowledge base). Detection covers code toolchains (npm, cargo, pip, composer, go, …) and content toolchains (Hugo, Jekyll, Astro, Eleventy, MkDocs, Vale, markdownlint).
+
 Both skills are grounded in the consolidated recommendations from the [official Claude Code docs](https://code.claude.com/docs/en/best-practices), [Anthropic’s engineering blog](https://www.anthropic.com/engineering), community configurations, and academic research on agent instruction design.
 
 ## What problem do these skills solve?
@@ -78,6 +80,7 @@ Or with a brief project description to skip some questions:
 
 ```
 /cc-init Next.js 14 e-commerce platform with Stripe and Postgres
+/cc-init Hugo site, 20 tutorial articles built from a shared knowledge base, output as Markdown
 ```
 
 The skill will:
@@ -165,6 +168,7 @@ Ongoing:  /cc-optimize                 ← Periodic hygiene checks
 ## Compatibility
 
 - Works with any programming language, framework, or build tool.
+- Works with content projects: static-site generators (Hugo, Jekyll, Astro, Eleventy, MkDocs), article collections, documentation sets, and Markdown-driven workflows. Knowledge bases and style guides can be referenced via `@`-imports for progressive disclosure rather than inlined into CLAUDE.md.
 - Supports projects using [OpenSpec](https://github.com/Fission-AI/OpenSpec/) for structured change management.
 - Supports multi-tool AI environments (Codex, Gemini, Cursor, Copilot) via AGENTS.md.
 - Requires Claude Code (CLI or VS Code extension).
