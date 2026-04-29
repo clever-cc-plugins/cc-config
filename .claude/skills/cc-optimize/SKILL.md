@@ -30,6 +30,8 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - `.claude/commands/*.md` (legacy format)
 - `.claude/agents/*.md`
 - `.claude/learnings.md`
+- `.claude/context/` (domain context files, including `.claude/context/design/` for Claude Design handoff artifacts)
+- `DESIGN.md` (root-level design system spec — YAML tokens + Markdown rationale; auto-read by Claude Code and other agents)
 - `.mcp.json` (project root)
 - `~/.claude/CLAUDE.md` (user level — read but don't modify without asking)
 - `~/.claude.json` (user-level MCP — read but don't modify without asking)
@@ -46,6 +48,7 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - Directory structure and apparent architecture patterns
 - Hook managers and their hook files (`.husky/`, `lefthook.yml`, `.pre-commit-config.yaml`)
 - Project-local git hooks directory (`.githooks/`) and sync scripts (`scripts/sync-config-table.{sh,js}`)
+- Design system artifacts: `DESIGN.md` at the project root (persistent design system spec); `.claude/context/design/` for Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/)
 
 ### Current state metrics
 
@@ -93,6 +96,7 @@ Check for these anti-patterns:
 - Is the file using `@`-imports for large reference material? (imports reduce token waste by up to 59%)
 - If AGENTS.md exists, does CLAUDE.md import it via `@AGENTS.md` instead of duplicating content?
 - If OpenSpec is used, does CLAUDE.md reference `@openspec/project.md` for project context?
+- If `DESIGN.md` exists at the project root, does CLAUDE.md reference it via `@DESIGN.md **Read when:** building or editing any UI component`? Without this pointer Claude won't consult the design system when making UI decisions.
 - Are there too many `IMPORTANT:` or `YOU MUST` markers? (if everything is marked important, nothing is)
 
 ### 2b: AGENTS.md audit
@@ -167,6 +171,8 @@ This catches secrets committed by both Claude Code and the user. Unlike `permiss
 - Are there `.claude/commands/` files that should be migrated to the skills format?
 - Is skill content concise? (target <50 lines per SKILL.md, split if longer)
 - If OpenSpec is used: are OpenSpec skills duplicated across multiple tool directories (`.claude/`, `.codex/`, `.gemini/`, `.github/`)? If so, flag this as a maintenance risk and suggest consolidation.
+- Do skills that produce domain-specific output reference a shared context folder (e.g., `.claude/context/`)? If domain knowledge (brand voice, ICP, API contracts, architecture decisions) is inlined or duplicated across multiple skills, recommend consolidating it into `.claude/context/` and referencing it from each skill via progressive disclosure — update once, all skills reflect the change.
+- Does each skill end with a feedback step? A skill that closes by asking "Did this output meet your expectations? If not, I'll log a correction to `.claude/learnings.md`" makes the learnings loop active rather than passive — corrections are solicited at the point of delivery, not just accumulated from future mishaps. Flag absent feedback steps as "nice to have."
 
 ### 2f: Multi-tool consistency check
 
@@ -219,6 +225,7 @@ Organize findings into three categories:
 - Skills without proper frontmatter guards
 - Learnings entries that should be promoted to CLAUDE.md or a skill
 - Orphaned `scripts/sync-config-table.*` with no active hook wiring
+- `DESIGN.md` present at project root but not referenced via `@DESIGN.md` in CLAUDE.md (Claude won't apply the design system without the pointer)
 
 ### Nice to have (polish)
 
@@ -229,6 +236,8 @@ Organize findings into three categories:
 - MCP servers that could be added or removed
 - Missing secret scanner (gitleaks) in pre-commit hook
 - Sync script format mismatch with project conventions (e.g., `.sh` in a Node-only repo)
+- Skills producing domain-specific output without referencing a shared `.claude/context/` folder (domain knowledge duplicated or inlined per-skill)
+- Skills missing a terminal feedback step that solicits corrections into the learnings loop
 
 Present the findings to the user as a concise list, grouped by category. For each finding, state: what the issue is, why it matters, and what you'd change. Ask for approval before making changes.
 

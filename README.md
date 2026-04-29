@@ -10,15 +10,15 @@ Two Claude Code skills for setting up and maintaining a best-practice Claude Cod
 
 All three skills work for software projects **and** content projects (static sites, article collections, documentation sets backed by a shared knowledge base). Detection covers code toolchains (npm, cargo, pip, composer, go, …) and content toolchains (Hugo, Jekyll, Astro, Eleventy, MkDocs, Vale, markdownlint).
 
-All three skills are grounded in the consolidated recommendations from the [official Claude Code docs](https://code.claude.com/docs/en/best-practices), [Anthropic’s engineering blog](https://www.anthropic.com/engineering), community configurations, and academic research on agent instruction design.
+All three skills are grounded in the consolidated recommendations from the [official Claude Code docs](https://code.claude.com/docs/en/best-practices), [Anthropic's engineering blog](https://www.anthropic.com/engineering), community configurations, and academic research on agent instruction design.
 
 ## What problem do these skills solve?
 
-The built-in `/init` generates a CLAUDE.md by scanning your repository. The result is often verbose, generic, and stuffed with information Claude already knows — burning context tokens on every single message. There’s also no guidance on permissions, hooks, cost optimization, or the broader configuration surface beyond CLAUDE.md.
+The built-in `/init` generates a CLAUDE.md by scanning your repository. The result is often verbose, generic, and stuffed with information Claude already knows — burning context tokens on every single message. There's also no guidance on permissions, hooks, cost optimization, or the broader configuration surface beyond CLAUDE.md.
 
 These skills take a different approach:
 
-- **`/cc-init`** creates the minimum viable configuration that’s correct from day one: a slim CLAUDE.md, hardened `permissions.deny`, a formatter hook if applicable, and cost-optimization defaults. It asks targeted questions instead of guessing, and uses TODO placeholders rather than hallucinating commands it can’t verify.
+- **`/cc-init`** creates the minimum viable configuration that's correct from day one: a slim CLAUDE.md, hardened `permissions.deny`, a formatter hook if applicable, and cost-optimization defaults. It asks targeted questions instead of guessing, and uses TODO placeholders rather than hallucinating commands it can't verify.
 
 - **`/cc-optimize`** treats your existing configuration as a codebase to audit. It inventories every config file, measures CLAUDE.md line count, checks for known anti-patterns (bloat, missing hooks, hardcoded secrets, deprecated settings), and presents findings in three tiers — must fix, should fix, nice to have — before touching anything.
 
@@ -86,19 +86,21 @@ Or with a brief project description to skip some questions:
 
 The skill will:
 
-1. **Scan** for existing config, project files, quality tools, and sensitive files.
-2. **Ask** targeted questions about anything it can’t determine from the directory contents.
+1. **Scan** for existing config, project files, quality tools, sensitive files, and design system artifacts (`DESIGN.md`, `.claude/context/design/`).
+2. **Ask** targeted questions about anything it can't determine — including whether there is shared domain knowledge (brand voice, ICP, architecture decisions, API contracts) that should live in a shared context folder for all future skills to reference.
 3. **Create** these files:
    - `.claude/settings.json` — permissions, hooks (if a formatter was detected), cost-optimization env vars
    - `CLAUDE.md` — slim project instructions (typically 20–40 lines), including a Key Config Files table and a Learnings section
+   - `.claude/context/` — optional shared domain context folder (brand, architecture, etc.) with placeholder files, if the user confirms domain knowledge to capture; Claude Design handoff artifacts belong in `.claude/context/design/`
    - `AGENTS.md` — only if a multi-tool AI environment is detected or mentioned
    - `.gitignore` additions for personal Claude Code files
-   - `scripts/sync-config-table.sh` — keeps the Key Config Files table in CLAUDE.md in sync with the filesystem
+   - `scripts/sync-config-table.sh` — keeps the Key Config Files table in CLAUDE.md in sync with the filesystem (including `DESIGN.md` and `.claude/context/` files)
    - `.githooks/pre-commit` — runs the sync script before each commit
-4. **Activate** the git hooks directory: `git config core.hooksPath .githooks` (run automatically, once per clone).
-5. **Summarize** what was created, what was left out, and what to do next — including an explanation of the Learnings mechanism.
+4. **Wire** `DESIGN.md` into CLAUDE.md via `@`-import if the file exists at the project root, so Claude automatically consults the design system when building UI.
+5. **Activate** the git hooks directory: `git config core.hooksPath .githooks` (run automatically, once per clone).
+6. **Summarize** what was created, what was left out, and four high-leverage next steps — including a pointer to the `/schedule` skill for automating recurring multi-step workflows.
 
-It deliberately does **not** set up MCP servers, create skills, or generate content it can’t verify. Those decisions are premature for an empty project.
+It deliberately does **not** set up MCP servers, create skills, or generate content it can't verify. Those decisions are premature for an empty project.
 
 ### `/cc-optimize` — Audit and improve an existing setup
 
@@ -118,8 +120,8 @@ Or focused on a specific area:
 
 The skill will:
 
-1. **Inventory** every configuration file, the project’s tech stack, and available context (code, docs, OpenSpec specs). This now includes `.claude/learnings.md` and reports the number of entries it contains.
-2. **Analyze** against best practices, checking for bloat, missing essentials (including a Learnings section), security gaps, cost optimization opportunities, and multi-tool consistency.
+1. **Inventory** every configuration file, design system artifacts (`DESIGN.md`, `.claude/context/design/`), the project's tech stack, and available context (code, docs, OpenSpec specs). This now includes `.claude/learnings.md` and reports the number of entries it contains.
+2. **Analyze** against best practices, checking for bloat, missing essentials (including a Learnings section and an unreferenced `DESIGN.md`), security gaps, cost optimization opportunities, and multi-tool consistency.
 3. **Review learnings**: if `.claude/learnings.md` exists, group entries into recurring patterns vs. one-offs and propose promoting patterns into CLAUDE.md, a skill, or a hook — then deleting resolved entries.
 4. **Present** findings grouped as must fix / should fix / nice to have, with explanations for each.
 5. **Wait for your approval** before changing anything.
@@ -151,44 +153,95 @@ Ongoing:  /cc-optimize                 ← Periodic hygiene checks
           /cc-update                   ← After pulling updates from this repo
 ```
 
+## Working with design systems
+
+### The two design artifacts and where they live
+
+| Artifact                        | Where it lives            | What it is                                                                                                                                                                                |
+| ------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DESIGN.md`                     | Project root              | Persistent design system spec — YAML tokens + Markdown rationale. Auto-read by Claude Code, Cursor, Copilot, and other agents. Think of it like `tsconfig.json` for your visual language. |
+| Claude Design handoff artifacts | `.claude/context/design/` | Point-in-time exports from Claude Design: `PROMPT.md`, `design-notes.md`, `screenshots/`. Versioned alongside code, out of root clutter.                                                  |
+
+`DESIGN.md` is an open-source format (originated from Google Stitch, broadly adopted). Claude Design's "Handoff to Claude Code" export produces a bundle of implementation-ready artifacts — these two things are complementary, not competing.
+
+### Ordering guideline
+
+#### A — Design first, then code (most common)
+
+You have finished (or sketched) the design in Claude Design before setting up the project config.
+
+1. Export or author `DESIGN.md` and place it at the **project root**.
+2. Place Claude Design handoff artifacts (`PROMPT.md`, `design-notes.md`, `screenshots/`) in **`.claude/context/design/`** — create the folder manually if needed.
+3. Run **`/cc-init`**. It detects `DESIGN.md` during the scan, wires it into CLAUDE.md with the right `@`-import trigger, and includes both `DESIGN.md` and `.claude/context/design/` files in the Key Config Files table automatically.
+
+#### B — Code first, design later
+
+You bootstrapped the project first and are adding a design system later.
+
+1. Run **`/cc-init`** as usual to set up the project config.
+2. When the design is ready: place `DESIGN.md` at the project root and handoff artifacts in `.claude/context/design/`.
+3. Run **`/cc-optimize`**. It detects the unreferenced `DESIGN.md` and flags it as "should fix" — approve the suggestion and it adds the `@`-import to CLAUDE.md and updates the Key Config Files table.
+
+#### C — No Claude Design, but an existing DESIGN.md
+
+You use a different tool (Figma + Stitch, hand-authored tokens, etc.) that already produced a `DESIGN.md`.
+
+1. Place `DESIGN.md` at the **project root** before running `/cc-init`.
+2. Run **`/cc-init`** — it picks it up automatically. No extra steps needed.
+
+#### The two rules that cover every case
+
+1. **`DESIGN.md` always lives at the project root** — this is the community convention; agents discover it there without any configuration.
+2. **Claude Design handoff artifacts always live in `.claude/context/design/`** — this keeps them versioned, organized, and visible in the Key Config Files table without polluting the root.
+
+If you add design artifacts after running `/cc-init`, a single `/cc-optimize` pass closes the gap.
+
 ## What the skills create and check
 
 ### Configuration files
 
-| File                           | Created by       | Purpose                                                                     |
-| ------------------------------ | ---------------- | --------------------------------------------------------------------------- |
-| `CLAUDE.md`                    | `/cc-init`       | Project instructions, loaded every message (target: 40–80 lines)            |
-| `AGENTS.md`                    | `/cc-init`       | Vendor-neutral agent instructions (if multi-tool environment)               |
-| `.claude/settings.json`        | `/cc-init`       | Permissions, hooks, environment variables                                   |
-| `.claude/learnings.md`         | auto (by Claude) | One-line corrections Claude appends instead of modifying CLAUDE.md directly |
-| `scripts/sync-config-table.sh` | `/cc-init`       | Keeps the Key Config Files table in CLAUDE.md in sync                       |
-| `.githooks/pre-commit`         | `/cc-init`       | Runs the sync script before each commit                                     |
-| `.claude/skills/cc-update`     | `install.sh`     | Updates installed skills to their latest versions (`/cc-update`)            |
-| `.claude/skills/*`             | manual           | Recurring workflows (audited by `/cc-optimize`)                             |
-| `.mcp.json`                    | manual           | MCP server configuration (audited by `/cc-optimize`)                        |
+| File                           | Created by            | Purpose                                                                                                                     |
+| ------------------------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `CLAUDE.md`                    | `/cc-init`            | Project instructions, loaded every message (target: 40–80 lines)                                                            |
+| `AGENTS.md`                    | `/cc-init`            | Vendor-neutral agent instructions (if multi-tool environment)                                                               |
+| `DESIGN.md`                    | manual / design tool  | Design system spec — YAML tokens + Markdown rationale; wired into CLAUDE.md via `@`-import by `/cc-init` and `/cc-optimize` |
+| `.claude/settings.json`        | `/cc-init`            | Permissions, hooks, environment variables                                                                                   |
+| `.claude/context/`             | `/cc-init` (optional) | Shared domain context folder — brand, architecture, etc.; skills reference files here via progressive disclosure            |
+| `.claude/context/design/`      | manual (user)         | Claude Design handoff artifacts: `PROMPT.md`, `design-notes.md`, `screenshots/`                                             |
+| `.claude/learnings.md`         | auto (by Claude)      | One-line corrections Claude appends instead of modifying CLAUDE.md directly                                                 |
+| `scripts/sync-config-table.sh` | `/cc-init`            | Keeps the Key Config Files table in CLAUDE.md in sync — including `DESIGN.md` and `.claude/context/` files                  |
+| `.githooks/pre-commit`         | `/cc-init`            | Runs the sync script before each commit                                                                                     |
+| `.claude/skills/cc-update`     | `install.sh`          | Updates installed skills to their latest versions (`/cc-update`)                                                            |
+| `.claude/skills/*`             | manual                | Recurring workflows (audited by `/cc-optimize`)                                                                             |
+| `.mcp.json`                    | manual                | MCP server configuration (audited by `/cc-optimize`)                                                                        |
 
 ### Key best practices applied
 
-- **Lean CLAUDE.md**: every line costs tokens on every message. Remove anything the linter enforces, Claude already knows, or that’s only relevant sometimes (move to a skill).
+- **Lean CLAUDE.md**: every line costs tokens on every message. Remove anything the linter enforces, Claude already knows, or that's only relevant sometimes (move to a skill).
 - **Progressive disclosure**: use `@`-imports for reference docs instead of inlining them. Reduces token waste by up to 59%.
+- **Domain context folder**: shared knowledge (brand voice, ICP, architecture decisions, API contracts) lives in `.claude/context/` — update once, every skill that references it reflects the change. Claude Design handoff artifacts belong in `.claude/context/design/`.
+- **Design system integration**: `DESIGN.md` at the project root is wired into CLAUDE.md via `@DESIGN.md **Read when:** building or editing any UI component`. Without this pointer Claude ignores the file for design decisions.
 - **`permissions.deny`**: block `.env`, secrets, and destructive commands. Replaces the deprecated `ignorePatterns`.
 - **Formatter hooks**: deterministic PostToolUse hooks beat instructions like "always run prettier" — the hook runs every time, the instruction might be ignored.
 - **Cost-optimization defaults**: auto-compact at 50% instead of the default 83%, capped thinking tokens, optional Haiku subagents.
 - **Verification loops**: test commands in CLAUDE.md so Claude can verify its own work (2–3× quality improvement).
-- **Key Config Files auto-sync**: a pre-commit hook keeps the config file table in CLAUDE.md current — new files get a `TODO` placeholder, deleted files are removed automatically. Uses `.githooks/` (no Husky dependency). Requires one-time activation per clone: `git config core.hooksPath .githooks`.
+- **Key Config Files auto-sync**: a pre-commit hook keeps the config file table in CLAUDE.md current — new files get a `TODO` placeholder, deleted files are removed automatically. Covers `DESIGN.md` and `.claude/context/` subdirectories. Uses `.githooks/` (no Husky dependency). Requires one-time activation per clone: `git config core.hooksPath .githooks`.
 - **Learnings graduation**: when Claude makes a mistake, it appends a one-line correction to `.claude/learnings.md` instead of editing CLAUDE.md directly. Running `/cc-optimize` reviews the file: recurring patterns graduate into CLAUDE.md rules, skills, or hooks; one-off entries get deleted. Keeps CLAUDE.md stable between audits.
+- **Skill feedback loops**: skills should end with a step that asks for feedback and logs corrections to `.claude/learnings.md`, making the learnings loop active rather than passive.
+- **Scheduling**: once recurring multi-step workflows emerge, the `/schedule` skill can automate them — run a chain of skills on a cron schedule and land the output in a review folder for human sign-off.
 
 ## Compatibility
 
 - Works with any programming language, framework, or build tool.
 - Works with content projects: static-site generators (Hugo, Jekyll, Astro, Eleventy, MkDocs), article collections, documentation sets, and Markdown-driven workflows. Knowledge bases and style guides can be referenced via `@`-imports for progressive disclosure rather than inlined into CLAUDE.md.
+- Works with design-system-driven projects: detects `DESIGN.md` at the project root and Claude Design handoff artifacts in `.claude/context/design/`, and wires them into CLAUDE.md correctly.
 - Supports projects using [OpenSpec](https://github.com/Fission-AI/OpenSpec/) for structured change management.
 - Supports multi-tool AI environments (Codex, Gemini, Cursor, Copilot) via AGENTS.md.
 - Requires Claude Code (CLI or VS Code extension).
 
 ## Contributing
 
-Issues and pull requests are welcome. If you’ve found a best practice that isn’t covered, or a pattern that the skills should detect, please open an issue.
+Issues and pull requests are welcome. If you've found a best practice that isn't covered, or a pattern that the skills should detect, please open an issue.
 
 ## License
 

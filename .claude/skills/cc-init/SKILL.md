@@ -25,6 +25,7 @@ Before creating any files, understand what you're working with.
    - **Code**: `package.json`, `composer.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, `Makefile`, `Gemfile`, `pom.xml`, `build.gradle`, any `*.sln` or `*.csproj` files.
    - **Content / static sites / docs**: `hugo.toml`, `config.toml`, `config.yaml` (Hugo), `_config.yml` (Jekyll), `astro.config.*`, `.eleventy.js`, `mkdocs.yml`, `content/`, `articles/`, `posts/`, `_posts/`, dominant `.md` files, knowledge base or style guide files (`STYLE.md`, `style-guide.md`).
    - Always check `README.md` for purpose.
+   - **Design system**: `DESIGN.md` at the project root (open-source format — YAML design tokens + Markdown rationale; Claude Code and other agents read it automatically). Also check `.claude/context/design/` for Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/).
 4. Check for existing quality tools:
    - **Code**: `.eslintrc*`, `.prettierrc*`, `phpcs.xml*`, `rustfmt.toml`, `.editorconfig`, CI configs (`.github/workflows/`, `.gitlab-ci.yml`), pre-commit configs.
    - **Content**: `.vale.ini` / `vale.ini`, `.markdownlint.{json,yaml,yml}`, prettier configured for Markdown.
@@ -37,6 +38,10 @@ If the project directory is truly empty or has minimal content, ask the user:
 - Are there inputs you'll reference repeatedly, like a shared knowledge base or style guide?
 
 If `$ARGUMENTS` was provided, use that as the project description and infer what you can. Only ask about things you genuinely cannot determine.
+
+Regardless of project size, also ask:
+
+- Is there domain knowledge that should live in a shared context folder for all future skills to reference? (Examples: brand voice, ICP, technical architecture decisions, API contracts, editorial standards.) If yes, scaffold `.claude/context/` with placeholder files in Step 2.
 
 ## Step 2: Create .claude/settings.json
 
@@ -122,6 +127,20 @@ Always include these cost-optimization defaults:
 
 This overrides auto-compaction from the default ~83% (too late for good quality) to 50%.
 
+### Domain context folder
+
+If the user confirmed shared domain knowledge in Step 1, create `.claude/context/` with one or more placeholder files appropriate to the project:
+
+- Brand / content project → `.claude/context/brand.md`: sections for brand voice, tone, ICP, and positioning
+- Software project → `.claude/context/architecture.md`: sections for key decisions, API contracts, and technical conventions
+- Mixed project → create both
+
+Keep each file to a heading per section with `TODO` markers. Add this line at the top of each file: "Skills load this via progressive disclosure — update it once and every skill that references it reflects the change."
+
+Wire each file into CLAUDE.md's References section in Step 3.
+
+**Claude Design handoffs:** If the project uses Claude Design (Anthropic's visual design tool), direct the user to place Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/) in `.claude/context/design/` — not the project root. This keeps handoff snapshots versioned alongside the codebase without cluttering the root. `DESIGN.md` is different: it is a persistent, project-wide design system spec (YAML tokens + Markdown rationale) that lives at the project root and is auto-read by Claude Code and other agents. If `DESIGN.md` already exists or is being added, wire it into CLAUDE.md with `@DESIGN.md **Read when:** building or editing any UI component` — do not copy its contents into `.claude/context/`.
+
 ## Step 3: Create CLAUDE.md
 
 Build a project-level CLAUDE.md. Target 20–40 lines for a fresh project. It will grow as the project grows.
@@ -147,11 +166,12 @@ Structure:
 
 ## References
 
-<Optional. For content projects with a shared knowledge base or style guide, use progressive disclosure rather than inlining content:
+<Optional. For content projects with a shared knowledge base or style guide, and for any project where a .claude/context/ folder was set up in Step 2, use progressive disclosure rather than inlining content:
 ```
 
 @knowledge-base/index.md
 @style-guide.md **Read when:** writing or editing articles
+@DESIGN.md **Read when:** building or editing any UI component
 
 ```
 Only include this section if such files exist.>
@@ -264,6 +284,11 @@ for dotfile in .gitignore .npmignore .prettierignore .editorconfig .nvmrc .node-
   [[ -f "$ROOT/$dotfile" ]] && config_files+=("$dotfile")
 done
 
+# Root-level named config files (non-dotfile conventions)
+for named_config in DESIGN.md; do
+  [[ -f "$ROOT/$named_config" ]] && config_files+=("$named_config")
+done
+
 # .claude/ direct children (skip subdirectories like skills/)
 if [[ -d "$ROOT/.claude" ]]; then
   while IFS= read -r -d '' f; do
@@ -277,6 +302,14 @@ if [[ -d "$ROOT/.claude/skills" ]]; then
     relpath="${f#$ROOT/}"
     config_files+=("$relpath")
   done < <(find "$ROOT/.claude/skills" -maxdepth 2 -name 'SKILL.md' -type f -print0 2>/dev/null | sort -z)
+fi
+
+# .claude/context/ reference files
+if [[ -d "$ROOT/.claude/context" ]]; then
+  while IFS= read -r -d '' f; do
+    relpath="${f#$ROOT/}"
+    config_files+=("$relpath")
+  done < <(find "$ROOT/.claude/context" -maxdepth 2 -type f -name '*.md' -print0 2>/dev/null | sort -z)
 fi
 
 # .github/workflows/
@@ -406,13 +439,14 @@ This needs to be run once per clone. Note this in the summary (Step 7) so the us
 
 After creating all files, give the user a concise summary:
 
-1. List every file created with a one-line description.
+1. List every file created with a one-line description — including any `.claude/context/` files if they were scaffolded.
 2. Note any TODO placeholders that need filling in once the project takes shape.
 3. Mention what was intentionally left out and why (e.g., "No PostToolUse hook yet because no formatter was detected — add one once you pick a formatter.").
-4. Remind the user of three high-leverage next steps:
+4. Remind the user of four high-leverage next steps:
    - Add test/build/lint commands to CLAUDE.md once they exist.
    - Run `/cc-optimize` after the project has some code to get a project-aware configuration pass.
    - Consider adding MCP servers to `.mcp.json` as needs arise (Context7 for docs, GitHub for PRs, etc.).
+   - Once recurring multi-step workflows emerge, the `/schedule` skill can automate them — run a chain of skills on a cron schedule and land the output in a review folder for human sign-off before anything goes live.
 5. If the Key Config Files auto-sync was set up (Step 6), remind the user:
    - The pre-commit hook requires a one-time activation per clone: `git config core.hooksPath .githooks`
    - This command was already run for the current clone, but collaborators or fresh clones need to run it too.
