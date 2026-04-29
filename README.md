@@ -6,9 +6,11 @@ Two Claude Code skills for setting up and maintaining a best-practice Claude Cod
 
 **`/cc-optimize`** audits and improves an existing configuration against current best practices — useful after a project has grown, or periodically to prevent config drift.
 
-Both skills work for software projects **and** content projects (static sites, article collections, documentation sets backed by a shared knowledge base). Detection covers code toolchains (npm, cargo, pip, composer, go, …) and content toolchains (Hugo, Jekyll, Astro, Eleventy, MkDocs, Vale, markdownlint).
+**`/cc-update`** fetches the latest versions of all installed skills from this repository — run it any time you want to pick up improvements.
 
-Both skills are grounded in the consolidated recommendations from the [official Claude Code docs](https://code.claude.com/docs/en/best-practices), [Anthropic’s engineering blog](https://www.anthropic.com/engineering), community configurations, and academic research on agent instruction design.
+All three skills work for software projects **and** content projects (static sites, article collections, documentation sets backed by a shared knowledge base). Detection covers code toolchains (npm, cargo, pip, composer, go, …) and content toolchains (Hugo, Jekyll, Astro, Eleventy, MkDocs, Vale, markdownlint).
+
+All three skills are grounded in the consolidated recommendations from the [official Claude Code docs](https://code.claude.com/docs/en/best-practices), [Anthropic’s engineering blog](https://www.anthropic.com/engineering), community configurations, and academic research on agent instruction design.
 
 ## What problem do these skills solve?
 
@@ -22,34 +24,31 @@ These skills take a different approach:
 
 ## Installation
 
-Copy the `.claude/skills/` directory into your project:
+Run the install script from your project directory:
 
 ```bash
-# Clone the repo
-git clone https://github.com/YOUR_USERNAME/claude-code-config-skills.git /tmp/cc-skills
-
-# Copy the skills into your project
-cp -r /tmp/cc-skills/.claude/skills/cc-init YOUR_PROJECT/.claude/skills/cc-init
-cp -r /tmp/cc-skills/.claude/skills/cc-optimize YOUR_PROJECT/.claude/skills/cc-optimize
-
-# Clean up
-rm -rf /tmp/cc-skills
+curl -fsSL https://raw.githubusercontent.com/MichaelvanLaar/claude-code-config-skills/main/install.sh | bash
 ```
 
-Or, if you just want to bootstrap a brand new project from scratch:
+This downloads `cc-init`, `cc-optimize`, and `cc-update` into `.claude/skills/`.
+
+To install into a specific directory, or to pin to a release tag:
 
 ```bash
-# Create project directory and clone skills into it
-mkdir my-new-project && cd my-new-project
-git clone https://github.com/YOUR_USERNAME/claude-code-config-skills.git /tmp/cc-skills
-mkdir -p .claude/skills
-cp -r /tmp/cc-skills/.claude/skills/cc-init .claude/skills/cc-init
-cp -r /tmp/cc-skills/.claude/skills/cc-optimize .claude/skills/cc-optimize
-rm -rf /tmp/cc-skills
+# Specific directory
+curl -fsSL https://raw.githubusercontent.com/MichaelvanLaar/claude-code-config-skills/main/install.sh | bash -s path/to/project
 
-# Start Claude Code and bootstrap
-claude
-# Then type: /cc-init
+# Pin to a specific tag or commit
+curl -fsSL https://raw.githubusercontent.com/MichaelvanLaar/claude-code-config-skills/main/install.sh | REF=v1.0.0 bash
+```
+
+If you prefer to inspect the script before running it:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MichaelvanLaar/claude-code-config-skills/main/install.sh -o install.sh
+# Review install.sh, then:
+bash install.sh
+rm install.sh
 ```
 
 ### Directory structure after installation
@@ -60,7 +59,9 @@ your-project/
     └── skills/
         ├── cc-init/
         │   └── SKILL.md
-        └── cc-optimize/
+        ├── cc-optimize/
+        │   └── SKILL.md
+        └── cc-update/
             └── SKILL.md
 ```
 
@@ -125,6 +126,16 @@ The skill will:
 6. **Apply** approved changes with before/after summaries.
 7. **Report** metrics (e.g., "CLAUDE.md: 247 lines → 62 lines", "Learnings: 8 entries → 0").
 
+### `/cc-update` — Keep skills current
+
+After the initial install, run this from within Claude Code any time you want to pull the latest versions:
+
+```
+/cc-update
+```
+
+It updates `cc-init`, `cc-optimize`, and itself — only for skills already installed in the project. Skills you have not installed are left alone.
+
 ### Recommended workflow
 
 ```
@@ -137,6 +148,7 @@ Week 1:   /cc-optimize                 ← First optimization pass with real cod
 Ongoing:  /cc-optimize                 ← Periodic hygiene checks
           /cc-optimize CLAUDE.md       ← After CLAUDE.md has grown significantly
           /cc-optimize costs           ← When token spend feels high
+          /cc-update                   ← After pulling updates from this repo
 ```
 
 ## What the skills create and check
@@ -151,6 +163,7 @@ Ongoing:  /cc-optimize                 ← Periodic hygiene checks
 | `.claude/learnings.md`         | auto (by Claude) | One-line corrections Claude appends instead of modifying CLAUDE.md directly |
 | `scripts/sync-config-table.sh` | `/cc-init`       | Keeps the Key Config Files table in CLAUDE.md in sync                       |
 | `.githooks/pre-commit`         | `/cc-init`       | Runs the sync script before each commit                                     |
+| `.claude/skills/cc-update`     | `install.sh`     | Updates installed skills to their latest versions (`/cc-update`)            |
 | `.claude/skills/*`             | manual           | Recurring workflows (audited by `/cc-optimize`)                             |
 | `.mcp.json`                    | manual           | MCP server configuration (audited by `/cc-optimize`)                        |
 
