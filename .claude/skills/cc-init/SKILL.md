@@ -285,9 +285,9 @@ for dotfile in .gitignore .npmignore .prettierignore .editorconfig .nvmrc .node-
 done
 
 # Root-level named config files (non-dotfile conventions)
-for named_config in DESIGN.md; do
-  [[ -f "$ROOT/$named_config" ]] && config_files+=("$named_config")
-done
+if [[ -f "$ROOT/DESIGN.md" ]]; then
+  config_files+=("DESIGN.md")
+fi
 
 # .claude/ direct children (skip subdirectories like skills/)
 if [[ -d "$ROOT/.claude" ]]; then
