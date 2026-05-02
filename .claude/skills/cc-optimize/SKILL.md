@@ -171,7 +171,10 @@ This catches secrets committed by both Claude Code and the user. Unlike `permiss
 - Are there `.claude/commands/` files that should be migrated to the skills format?
 - Is skill content concise? (target <50 lines per SKILL.md, split if longer)
 - If OpenSpec is used: are OpenSpec skills duplicated across multiple tool directories (`.claude/`, `.codex/`, `.gemini/`, `.github/`)? If so, flag this as a maintenance risk and suggest consolidation.
-- Do skills that produce domain-specific output reference a shared context folder (e.g., `.claude/context/`)? If domain knowledge (brand voice, ICP, API contracts, architecture decisions) is inlined or duplicated across multiple skills, recommend consolidating it into `.claude/context/` and referencing it from each skill via progressive disclosure — update once, all skills reflect the change.
+- Do skills that produce domain-specific output correctly separate context by scope? Check for three types of violations:
+  - **Company-level knowledge inlined or duplicated per-skill**: brand voice, company profile, buyer personas, architecture decisions belong in `.claude/context/`. Consolidate and reference via progressive disclosure — update once, every skill reflects the change.
+  - **Format-level knowledge in `.claude/context/`**: a whitepaper structure guide or blog length rules belong inside the skill's own folder, not the shared context folder.
+  - **Campaign/feature briefings in `.claude/context/`**: initiative-specific briefings belong in the relevant project subfolder, not the company-scoped shared folder.
 - Does each skill end with a feedback step? A skill that closes by asking "Did this output meet your expectations? If not, I'll log a correction to `.claude/learnings.md`" makes the learnings loop active rather than passive — corrections are solicited at the point of delivery, not just accumulated from future mishaps. Flag absent feedback steps as "nice to have."
 
 ### 2f: Multi-tool consistency check
@@ -236,7 +239,9 @@ Organize findings into three categories:
 - MCP servers that could be added or removed
 - Missing secret scanner (gitleaks) in pre-commit hook
 - Sync script format mismatch with project conventions (e.g., `.sh` in a Node-only repo)
-- Skills producing domain-specific output without referencing a shared `.claude/context/` folder (domain knowledge duplicated or inlined per-skill)
+- Skills producing domain-specific output without referencing a shared `.claude/context/` folder (company-level knowledge duplicated or inlined per-skill)
+- Context scope violations: company-level knowledge buried in campaign subfolders, or format-level guidelines in `.claude/context/` instead of the relevant skill's folder
+- Multi-level folder project without hierarchical CLAUDE.md files: if the repo has campaign, feature, or package subfolders where context meaningfully changes, each level should have its own CLAUDE.md that @-imports the relevant context for that scope — this lets Claude inherit all relevant context when started in any subfolder, without skills needing hard-coded paths to shared files
 - Skills missing a terminal feedback step that solicits corrections into the learnings loop
 
 Present the findings to the user as a concise list, grouped by category. For each finding, state: what the issue is, why it matters, and what you'd change. Ask for approval before making changes.

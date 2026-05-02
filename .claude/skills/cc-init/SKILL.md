@@ -41,7 +41,7 @@ If `$ARGUMENTS` was provided, use that as the project description and infer what
 
 Regardless of project size, also ask:
 
-- Is there domain knowledge that should live in a shared context folder for all future skills to reference? (Examples: brand voice, ICP, technical architecture decisions, API contracts, editorial standards.) If yes, scaffold `.claude/context/` with placeholder files in Step 2.
+- Is there domain knowledge that should live in a shared context folder for all future skills to reference? (Examples: company profile, brand voice, buyer personas, architecture decisions, API contracts, editorial standards.) See the Domain context folder section in Step 2 — ask the user what types of company-level context they have, then name and scaffold files accordingly.
 
 ## Step 2: Create .claude/settings.json
 
@@ -129,15 +129,36 @@ This overrides auto-compaction from the default ~83% (too late for good quality)
 
 ### Domain context folder
 
-If the user confirmed shared domain knowledge in Step 1, create `.claude/context/` with one or more placeholder files appropriate to the project:
+Context knowledge lives at three scope levels. Explain this to the user before creating anything:
 
-- Brand / content project → `.claude/context/brand.md`: sections for brand voice, tone, ICP, and positioning
-- Software project → `.claude/context/architecture.md`: sections for key decisions, API contracts, and technical conventions
-- Mixed project → create both
+**Level 1 — Company/project scope** (`.claude/context/`): Knowledge that applies to all work in this repo. Examples: company profile, brand voice, buyer personas, architecture decisions, API contracts. One file per distinct type of knowledge — name files after what they contain, not a fixed schema. Update one file, every skill that references it reflects the change.
 
-Keep each file to a heading per section with `TODO` markers. Add this line at the top of each file: "Skills load this via progressive disclosure — update it once and every skill that references it reflects the change."
+**Level 2 — Format scope** (inside each skill's own folder): Knowledge specific to producing one output type — a whitepaper structure guide, blog length conventions, API endpoint style rules. Belongs with the skill that uses it, not in `.claude/context/`.
 
-Wire each file into CLAUDE.md's References section in Step 3.
+**Level 3 — Campaign/feature scope** (regular project subfolders): Briefings, campaign assets, or feature specs for a specific initiative. Scoped to that subfolder — not shared globally.
+
+If the user confirmed company-level context in Step 1, ask: "What types of company-level context do you have?" Create one file per type they describe, with a `TODO` marker and a one-line description of what belongs there. Do not prescribe filenames — use names that reflect the actual content (`company-profile.md`, `brand-voice.md`, `buyer-personas.md`, `architecture-decisions.md`, or whatever fits the project).
+
+Also create `.claude/context/README.md` as a brief index explaining the convention:
+
+```markdown
+# Context
+
+Company-scoped knowledge referenced by skills and CLAUDE.md files across this repo.
+One file per type of knowledge — update once, every reference reflects the change.
+
+Format-specific guidelines live inside each skill's own folder, not here.
+Campaign or feature briefings live in their respective project subfolders, not here.
+```
+
+Wire each context file into CLAUDE.md's References section in Step 3 using progressive disclosure triggers.
+
+**Hierarchical CLAUDE.md for multi-level projects:** If the project has a nested folder structure — a marketing monorepo with campaign subfolders, a multi-package code repo, a website with distinct content sections — suggest CLAUDE.md files at each meaningful directory level:
+
+- Root `CLAUDE.md` → @-imports all company-wide context files from `.claude/context/`
+- Each subfolder's `CLAUDE.md` → @-imports briefings or specs scoped to that folder
+
+When Claude Code starts in any subfolder, it reads CLAUDE.md files up the directory tree, so a session in `campaigns/product-xy/june-2026/` automatically gets company context (via root CLAUDE.md) plus campaign context (via the local CLAUDE.md). Skills invoked in that session inherit all of it without hard-coded absolute paths to shared files. Guide the user to create and maintain CLAUDE.md files at each level where the context meaningfully changes as the project structure grows.
 
 **Claude Design handoffs:** If the project uses Claude Design (Anthropic's visual design tool), direct the user to place Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/) in `.claude/context/design/` — not the project root. This keeps handoff snapshots versioned alongside the codebase without cluttering the root. `DESIGN.md` is different: it is a persistent, project-wide design system spec (YAML tokens + Markdown rationale) that lives at the project root and is auto-read by Claude Code and other agents. If `DESIGN.md` already exists or is being added, wire it into CLAUDE.md with `@DESIGN.md **Read when:** building or editing any UI component` — do not copy its contents into `.claude/context/`.
 
