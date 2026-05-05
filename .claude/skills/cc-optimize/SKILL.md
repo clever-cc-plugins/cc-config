@@ -154,6 +154,20 @@ This catches secrets committed by both Claude Code and the user. Unlike `permiss
 - Is `CLAUDE_CODE_MAX_OUTPUT_TOKENS` set? Consider `16000` to prevent unnecessarily verbose responses.
 - Is `CLAUDE_CODE_SUBAGENT_MODEL` set? `haiku` gives ~80% cost savings for exploration subagents.
 
+**`.claudeignore`:**
+
+Check whether a `.claudeignore` file exists. This file (`.gitignore` syntax) tells Claude Code which paths to skip entirely when indexing the project, reducing invisible startup token overhead.
+
+Flag as a "should fix" if:
+
+- The repo has `node_modules/`, `vendor/`, `.venv/`, or other dependency trees present and no `.claudeignore` excludes them.
+- Build output directories exist (`dist/`, `build/`, `.next/`, `target/`, `_site/`, `coverage/`) and are not excluded.
+- Large binary or media asset folders are present that Claude would never usefully read.
+
+Flag as "nice to have" if the repo is small and tidy but could benefit from exclusions as it grows.
+
+Run `/context` in a fresh session to get the current startup token count — if it exceeds ~10,000 tokens before any user message, a missing `.claudeignore` is a likely contributor.
+
 ### 2d: MCP audit
 
 - How many servers are active? (5–10 is the sweet spot for most projects)
@@ -243,6 +257,8 @@ Organize findings into three categories:
 - Context scope violations: company-level knowledge buried in campaign subfolders, or format-level guidelines in `.claude/context/` instead of the relevant skill's folder
 - Multi-level folder project without hierarchical CLAUDE.md files: if the repo has campaign, feature, or package subfolders where context meaningfully changes, each level should have its own CLAUDE.md that @-imports the relevant context for that scope — this lets Claude inherit all relevant context when started in any subfolder, without skills needing hard-coded paths to shared files
 - Skills missing a terminal feedback step that solicits corrections into the learnings loop
+- PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in `.claude/context/` or referenced via `@`-imports
+- Missing `.claudeignore` startup token check: suggest the user run `/context` in a fresh session to measure actual startup overhead — if high, a missing or incomplete `.claudeignore` is a likely cause
 
 Present the findings to the user as a concise list, grouped by category. For each finding, state: what the issue is, why it matters, and what you'd change. Ask for approval before making changes.
 
