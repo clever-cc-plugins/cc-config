@@ -485,3 +485,7 @@ After creating all files, give the user a concise summary:
 - Don't create `.claude/local.md` or `settings.local.json`. Those are personal and should be created by the user.
 - Don't over-engineer. A 20-line CLAUDE.md that's accurate beats an 80-line one full of guesses.
 - Don't include information you're not confident about. TODOs are better than wrong instructions.
+
+## Feedback
+
+Before ending the session, ask: "Did this configuration meet your expectations? If anything needs adjusting, I'll log it to `.claude/learnings.md`."

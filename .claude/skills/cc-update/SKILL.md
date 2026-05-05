@@ -64,3 +64,7 @@ After the downloads complete:
 - Do not install `cc-init` or `cc-optimize` if they were not already present.
 - Do not run any skill after updating.
 - Do not modify any other project files.
+
+## Feedback
+
+Before ending the session, ask: "Were all skills updated successfully? If anything went wrong, I'll log it to `.claude/learnings.md`."
