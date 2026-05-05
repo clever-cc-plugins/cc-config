@@ -234,7 +234,9 @@ AGENTS.md is the vendor-neutral standard read by Codex, Amp, Cursor, Copilot, an
 
 If created, keep it focused on universal concerns: setup commands, architecture boundaries, code style rules, testing conventions, and safety rules. Then reference it from CLAUDE.md via `@AGENTS.md`.
 
-## Step 5: Update .gitignore
+## Step 5: Update .gitignore and create .claudeignore
+
+### 5a: Update .gitignore
 
 Append these lines if they're not already present:
 
@@ -243,6 +245,30 @@ Append these lines if they're not already present:
 .claude/settings.local.json
 .claude/local.md
 ```
+
+### 5b: Create .claudeignore (if the repo has large unreadable directories)
+
+`.claudeignore` follows `.gitignore` syntax and tells Claude Code which paths to skip entirely when indexing the project. Every excluded directory reduces the invisible token overhead that accumulates before the user types anything.
+
+Create `.claudeignore` if you detected any of the following in Step 1:
+
+- Build output: `dist/`, `build/`, `.next/`, `out/`, `target/`, `_site/`
+- Dependency trees: `node_modules/`, `vendor/`, `.venv/`, `venv/`
+- Test coverage reports: `coverage/`, `.nyc_output/`
+- Large binary or media asset folders: anything with predominantly images, videos, or binaries
+
+Example for a typical JS/TS project:
+
+```
+node_modules/
+dist/
+.next/
+coverage/
+```
+
+Adapt to what you actually found — don't create the file if the repo is small and tidy, and don't add entries speculatively. If the project is too empty to judge, note it in the Step 7 summary as something to add once the repo grows.
+
+Add `.claudeignore` to the Key Config Files table in Step 6 if created.
 
 ## Step 6: Create Key Config Files table auto-sync
 
@@ -463,7 +489,8 @@ After creating all files, give the user a concise summary:
 1. List every file created with a one-line description — including any `.claude/context/` files if they were scaffolded.
 2. Note any TODO placeholders that need filling in once the project takes shape.
 3. Mention what was intentionally left out and why (e.g., "No PostToolUse hook yet because no formatter was detected — add one once you pick a formatter.").
-4. Remind the user of four high-leverage next steps:
+4. Remind the user of five high-leverage next steps:
+   - Run `/context` in a fresh session immediately after setup to check startup token overhead. If it exceeds ~10,000 tokens before sending a single message, something is loading too much — oversized CLAUDE.md, too many unconditional context imports, or a large number of MCP tools are common causes.
    - Add test/build/lint commands to CLAUDE.md once they exist.
    - Run `/cc-optimize` after the project has some code to get a project-aware configuration pass.
    - Consider adding MCP servers to `.mcp.json` as needs arise (Context7 for docs, GitHub for PRs, etc.).
