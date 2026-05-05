@@ -1,21 +1,19 @@
 # Claude Code Config Skills
 
-Reusable Claude Code custom skills for configuration management. Install via `install.sh` (see README) or by copying into any project's `.claude/skills/` directory.
+Reusable Claude Code skills for configuration management. Install skills into a
+target project via `install.sh` or by copying skill folders manually.
 
-## Setup
+## Skills in this Repository
 
-After cloning, enable the Git hooks:
+| Skill           | File                                  | Purpose                                                        |
+| --------------- | ------------------------------------- | -------------------------------------------------------------- |
+| **cc-init**     | `.claude/skills/cc-init/SKILL.md`     | Bootstrap a best-practice Claude Code config for a new project |
+| **cc-optimize** | `.claude/skills/cc-optimize/SKILL.md` | Audit and optimize an existing Claude Code configuration       |
+| **cc-update**   | `.claude/skills/cc-update/SKILL.md`   | Update installed skills to their latest versions               |
 
-```bash
-git config core.hooksPath .githooks
+## Structure
+
 ```
-
-## Key Config Files
-
-| File                                  | Purpose                                                               |
-| ------------------------------------- | --------------------------------------------------------------------- |
-| `install.sh`                          | Installs all skills into a target project via curl                    |
-| `.claude/skills/cc-init/SKILL.md`     | Skill: Bootstrap a best-practice Claude Code config for a new project |
-| `.claude/skills/cc-optimize/SKILL.md` | Skill: Audit and optimize an existing Claude Code configuration       |
-| `.claude/skills/cc-update/SKILL.md`   | Skill: Update installed skills to their latest versions               |
-| `.gitignore`                          | Git ignore patterns                                                   |
+.claude/skills/[skill-name]/SKILL.md   one directory per skill
+install.sh                              Distributes skills to target projects
+```
