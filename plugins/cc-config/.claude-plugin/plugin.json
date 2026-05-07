@@ -1,0 +1,10 @@
+{
+  "name": "cc-config",
+  "description": "Bootstrap and audit Claude Code configurations",
+  "author": {
+    "name": "Michael van Laar"
+  },
+  "homepage": "https://github.com/MichaelvanLaar/claude-code-config-skills",
+  "repository": "https://github.com/MichaelvanLaar/claude-code-config-skills",
+  "license": "MIT"
+}

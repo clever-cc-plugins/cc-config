@@ -1,0 +1,14 @@
+{
+  "name": "cc-config-skills",
+  "owner": {
+    "name": "Michael van Laar"
+  },
+  "description": "Claude Code skills for setting up and maintaining best-practice Claude Code configurations",
+  "plugins": [
+    {
+      "name": "cc-config",
+      "source": "./plugins/cc-config",
+      "description": "Bootstrap and audit Claude Code configurations"
+    }
+  ]
+}
