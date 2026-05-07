@@ -1,4 +1,4 @@
-# claude-code-config-skills
+# Claude Code Config Skills
 
 Two Claude Code skills for setting up and maintaining a best-practice Claude Code configuration, distributed as a Claude Code plugin.
 
@@ -12,21 +12,28 @@ Both skills are grounded in the consolidated recommendations from the [official 
 
 ## Table of Contents
 
-- [What problem do these skills solve?](#what-problem-do-these-skills-solve)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [`/cc-config-init` — Bootstrap a new project](#cc-init--bootstrap-a-new-project)
-  - [`/cc-config-optimize` — Audit and improve an existing setup](#cc-optimize--audit-and-improve-an-existing-setup)
-  - [Recommended workflow](#recommended-workflow)
-- [Working with design systems](#working-with-design-systems)
-  - [The two design artifacts and where they live](#the-two-design-artifacts-and-where-they-live)
-  - [Ordering guideline](#ordering-guideline)
-- [What the skills create and check](#what-the-skills-create-and-check)
-  - [Configuration files](#configuration-files)
-  - [Key best practices applied](#key-best-practices-applied)
-- [Compatibility](#compatibility)
-- [Contributing](#contributing)
-- [License](#license)
+- [Claude Code Config Skills](#claude-code-config-skills)
+  - [Table of Contents](#table-of-contents)
+  - [What problem do these skills solve?](#what-problem-do-these-skills-solve)
+  - [Installation](#installation)
+    - [Keeping skills current](#keeping-skills-current)
+  - [Usage](#usage)
+    - [`/cc-config-init` — Bootstrap a new project](#cc-config-init--bootstrap-a-new-project)
+    - [`/cc-config-optimize` — Audit and improve an existing setup](#cc-config-optimize--audit-and-improve-an-existing-setup)
+    - [Recommended workflow](#recommended-workflow)
+  - [Working with design systems](#working-with-design-systems)
+    - [The two design artifacts and where they live](#the-two-design-artifacts-and-where-they-live)
+    - [Ordering guideline](#ordering-guideline)
+      - [A — Design first, then code (most common)](#a--design-first-then-code-most-common)
+      - [B — Code first, design later](#b--code-first-design-later)
+      - [C — No Claude Design, but an existing DESIGN.md](#c--no-claude-design-but-an-existing-designmd)
+      - [The two rules that cover every case](#the-two-rules-that-cover-every-case)
+  - [What the skills create and check](#what-the-skills-create-and-check)
+    - [Configuration files](#configuration-files)
+    - [Key best practices applied](#key-best-practices-applied)
+  - [Compatibility](#compatibility)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## What problem do these skills solve?
 
