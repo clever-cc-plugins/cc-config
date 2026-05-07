@@ -1,6 +1,6 @@
 {
   "name": "cc-config",
-  "description": "Bootstrap and audit Claude Code configurations",
+  "description": "Bootstrap and audit a best-practice Claude Code configuration",
   "author": {
     "name": "Michael van Laar"
   },
