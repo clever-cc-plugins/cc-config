@@ -15,7 +15,8 @@
 set -euo pipefail
 
 PRODUCT_PATHS=(
-  ".claude/skills/cc-config"
+  ".claude-plugin"
+  "plugins/cc-config"
   "install.sh"
   "LICENSE"
   ".gitignore"

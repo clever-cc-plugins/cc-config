@@ -1,20 +1,21 @@
 # Claude Code Config Skills
 
-Reusable Claude Code custom skills for configuration management. Install via `install.sh` (see README) or by copying into any project's `.claude/skills/` directory.
+Reusable Claude Code skills for configuration management, distributed as a Claude Code plugin. Install via the plugin system (see README).
 
 ## Key Config Files
 
-| File                                         | Purpose                                                               |
-| -------------------------------------------- | --------------------------------------------------------------------- |
-| `CLAUDE.md`                                  | Project instructions, loaded every message                            |
-| `.claude/settings.json`                      | Permissions, hooks, environment variables                             |
-| `.claude/skills/cc-config/init/SKILL.md`     | Skill: Bootstrap a best-practice Claude Code config for a new project |
-| `.claude/skills/cc-config/optimize/SKILL.md` | Skill: Audit and optimize an existing Claude Code configuration       |
-| `.claude/skills/cc-config/update/SKILL.md`   | Skill: Update installed skills to their latest versions               |
-| `.gitignore`                                 | Git ignore patterns                                                   |
-| `.githooks/pre-commit`                       | Reminds when staged skills are missing from sync-to-main.sh           |
-| `install.sh`                                 | Installs all skills into a target project via curl                    |
-| `scripts/sync-to-main.sh`                    | Copies product files from dev branch to main for distribution         |
+| File                                           | Purpose                                                                 |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| `CLAUDE.md`                                    | Project instructions, loaded every message                              |
+| `.claude/settings.json`                        | Permissions, hooks, environment variables                               |
+| `.claude-plugin/marketplace.json`              | Plugin marketplace manifest (makes this repo a Claude Code marketplace) |
+| `plugins/cc-config/.claude-plugin/plugin.json` | Plugin manifest for the cc-config plugin                                |
+| `plugins/cc-config/skills/init/SKILL.md`       | Skill: Bootstrap a best-practice Claude Code config for a new project   |
+| `plugins/cc-config/skills/optimize/SKILL.md`   | Skill: Audit and optimize an existing Claude Code configuration         |
+| `.gitignore`                                   | Git ignore patterns                                                     |
+| `.githooks/pre-commit`                         | Reminds when staged plugins are missing from sync-to-main.sh            |
+| `install.sh`                                   | Deprecated install script (now a shim pointing to plugin install)       |
+| `scripts/sync-to-main.sh`                      | Copies product files from dev branch to main for distribution           |
 
 ## Structure
 
@@ -33,6 +34,13 @@ After cloning, enable the Git hooks:
 git config core.hooksPath .githooks
 ```
 
+To use the cc-config skills locally in this repo (dogfooding), add the local marketplace once:
+
+```
+/plugin marketplace add ./
+/plugin install cc-config@cc-config-skills
+```
+
 ## Commands
 
 ```bash
@@ -47,7 +55,7 @@ bash scripts/sync-to-main.sh  # Sync product files from dev → main (run from d
 
 ## Compact Instructions
 
-When compacting, preserve: current branch, list of modified skills, whether a sync-to-main is pending.
+When compacting, preserve: current branch, list of modified plugins/skills, whether a sync-to-main is pending.
 
 ## Learnings
 

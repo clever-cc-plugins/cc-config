@@ -7,7 +7,7 @@ SYNC_SCRIPT="$(git rev-parse --show-toplevel)/scripts/sync-to-main.sh"
 # Extract unique skill folder names from staged files
 staged_skills=()
 while IFS= read -r file; do
-  if [[ "$file" =~ ^\.claude/skills/([^/]+)/ ]]; then
+  if [[ "$file" =~ ^plugins/([^/]+)/ ]]; then
     skill="${BASH_REMATCH[1]}"
     if [[ ! " ${staged_skills[*]} " =~ " ${skill} " ]]; then
       staged_skills+=("$skill")
@@ -21,10 +21,10 @@ done < <(git diff --cached --name-only)
 product_skills=()
 if [[ -f "$SYNC_SCRIPT" ]]; then
   while IFS= read -r line; do
-    if [[ "$line" =~ \.claude/skills/([^\"[:space:]]+) ]]; then
+    if [[ "$line" =~ plugins/([^\"[:space:]]+) ]]; then
       product_skills+=("${BASH_REMATCH[1]}")
     fi
-  done < <(grep '\.claude/skills/' "$SYNC_SCRIPT")
+  done < <(grep 'plugins/' "$SYNC_SCRIPT")
 fi
 
 # Report any staged skills not found in PRODUCT_PATHS
