@@ -1,19 +1,39 @@
 # Claude Code Config Skills
 
-Reusable Claude Code skills for configuration management. Install skills into a
-target project via `install.sh` or by copying skill folders manually.
+Reusable Claude Code skills for configuration management, distributed as a Claude Code plugin. Install via the plugin system (see README).
 
-## Skills in this Repository
+## Key Config Files
 
-| Skill           | File                                  | Purpose                                                        |
-| --------------- | ------------------------------------- | -------------------------------------------------------------- |
-| **cc-init**     | `.claude/skills/cc-init/SKILL.md`     | Bootstrap a best-practice Claude Code config for a new project |
-| **cc-optimize** | `.claude/skills/cc-optimize/SKILL.md` | Audit and optimize an existing Claude Code configuration       |
-| **cc-update**   | `.claude/skills/cc-update/SKILL.md`   | Update installed skills to their latest versions               |
+| File                                           | Purpose                                                                 |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| `CLAUDE.md`                                    | Project instructions, loaded every message                              |
+| `.claude/settings.json`                        | Permissions, hooks, environment variables                               |
+| `.claude-plugin/marketplace.json`              | Plugin marketplace manifest (makes this repo a Claude Code marketplace) |
+| `plugins/cc-config/.claude-plugin/plugin.json` | Plugin manifest for the cc-config plugin                                |
+| `plugins/cc-config/skills/init/SKILL.md`       | Skill: Bootstrap a best-practice Claude Code config for a new project   |
+| `plugins/cc-config/skills/optimize/SKILL.md`   | Skill: Audit and optimize an existing Claude Code configuration         |
+| `install.sh`                                   | Deprecated install script (now a shim pointing to plugin install)       |
+| `.gitignore`                                   | Git ignore patterns                                                     |
 
-## Structure
+## Setup
+
+To use the cc-config skills locally in this repo (dogfooding), add the local marketplace once:
 
 ```
-.claude/skills/[skill-name]/SKILL.md   one directory per skill
-install.sh                              Distributes skills to target projects
+/plugin marketplace add ./
+/plugin install cc-config@cc-config-skills
 ```
+
+## Don't
+
+- Don't commit secrets or credentials to git
+- Don't use `--force` flags — fix the underlying issue instead
+
+## Compact Instructions
+
+When compacting, preserve: current branch and list of modified plugins/skills.
+
+## Learnings
+
+When the user corrects a mistake or points out a recurring issue, append a one-line
+summary to .claude/learnings.md. Don't modify CLAUDE.md directly.
