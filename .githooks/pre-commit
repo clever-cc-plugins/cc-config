@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Secret scanning — blocks commits if secrets are detected.
+# Requires gitleaks: brew install gitleaks  |  apt install gitleaks
+if command -v gitleaks &> /dev/null; then
+  gitleaks git --pre-commit --staged || exit 1
+else
+  echo "Warning: gitleaks not installed — secret scanning skipped."
+  echo "Install: brew install gitleaks (macOS) or https://github.com/gitleaks/gitleaks"
+fi
