@@ -452,6 +452,7 @@ if diff -q "$CLAUDE_MD" "$tmpfile" > /dev/null 2>&1; then
 else
   mv "$tmpfile" "$CLAUDE_MD"
   echo "sync-config-table: updated CLAUDE.md"
+  # Auto-stage so the updated table is included in the triggering commit
   git add CLAUDE.md
 fi
 ```
