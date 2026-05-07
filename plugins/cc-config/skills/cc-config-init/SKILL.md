@@ -379,7 +379,7 @@ done
 config_files=("${filtered_files[@]}")
 
 # Sort config files
-IFS=$'\n' sorted_files=($(sort <<<"${config_files[*]}")); unset IFS
+mapfile -t sorted_files < <(printf '%s\n' "${config_files[@]}" | sort)
 
 # Parse existing descriptions from CLAUDE.md
 declare -A descriptions
