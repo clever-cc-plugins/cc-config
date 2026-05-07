@@ -17,6 +17,7 @@ Both skills are grounded in the consolidated recommendations from the [official 
   - [What problem do these skills solve?](#what-problem-do-these-skills-solve)
   - [Installation](#installation)
     - [Keeping skills current](#keeping-skills-current)
+    - [Uninstalling](#uninstalling)
   - [Usage](#usage)
     - [`/cc-config-init` — Bootstrap a new project](#cc-config-init--bootstrap-a-new-project)
     - [`/cc-config-optimize` — Audit and improve an existing setup](#cc-config-optimize--audit-and-improve-an-existing-setup)
@@ -69,6 +70,20 @@ The plugin system checks for updates automatically on startup. For third-party m
 Once enabled, Claude Code updates the skills on startup whenever a new version is available.
 
 After running `/cc-config-init`, additional files are created in your project (see [What the skills create and check](#what-the-skills-create-and-check)).
+
+### Uninstalling
+
+To remove the plugin and the marketplace in one step:
+
+```
+/plugin marketplace remove cc-config-skills
+```
+
+Removing the marketplace automatically uninstalls any plugins installed from it. To remove only the plugin while keeping the marketplace:
+
+```
+/plugin uninstall cc-config@cc-config-skills
+```
 
 ## Usage
 
