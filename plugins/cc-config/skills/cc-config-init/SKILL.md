@@ -1,4 +1,5 @@
 ---
+name: cc-config-init
 description: Bootstrap a best-practice Claude Code configuration for a new or unconfigured project. Use this skill when a user asks to set up Claude Code, initialize a project, create a CLAUDE.md, or configure permissions/hooks/settings for the first time. Also use when the user says things like "set up this project", "configure Claude Code", "bootstrap config", or "better /init". This skill replaces the built-in /init with a leaner, more opinionated setup grounded in current best practices.
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 argument-hint: "[optional: brief project description]"
@@ -19,7 +20,7 @@ The single most impactful principle: give Claude a way to verify its work. If Cl
 Before creating any files, understand what you're working with.
 
 1. Check if a git repo exists. If not, do NOT create one — just note it for the user.
-2. Look for existing config: `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.mcp.json`. If any exist, tell the user this skill is for fresh setups and suggest using `/cc-config:optimize` instead.
+2. Look for existing config: `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.mcp.json`. If any exist, tell the user this skill is for fresh setups and suggest using `/cc-config-optimize` instead.
 3. Scan for clues about the project. Cover both code and content projects:
    - **Code**: `package.json`, `composer.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, `Makefile`, `Gemfile`, `pom.xml`, `build.gradle`, any `*.sln` or `*.csproj` files.
    - **Content / static sites / docs**: `hugo.toml`, `config.toml`, `config.yaml` (Hugo), `_config.yml` (Jekyll), `astro.config.*`, `.eleventy.js`, `mkdocs.yml`, `content/`, `articles/`, `posts/`, `_posts/`, dominant `.md` files, knowledge base or style guide files (`STYLE.md`, `style-guide.md`).
@@ -491,7 +492,7 @@ After creating all files, give the user a concise summary:
 4. Remind the user of five high-leverage next steps:
    - Run `/context` in a fresh session immediately after setup to check startup token overhead. If it exceeds ~10,000 tokens before sending a single message, something is loading too much — oversized CLAUDE.md, too many unconditional context imports, or a large number of MCP tools are common causes.
    - Add test/build/lint commands to CLAUDE.md once they exist.
-   - Run `/cc-config:optimize` after the project has some code to get a project-aware configuration pass.
+   - Run `/cc-config-optimize` after the project has some code to get a project-aware configuration pass.
    - Consider adding MCP servers to `.mcp.json` as needs arise (Context7 for docs, GitHub for PRs, etc.).
    - Once recurring multi-step workflows emerge, the `/schedule` skill can automate them — run a chain of skills on a cron schedule and land the output in a review folder for human sign-off before anything goes live.
 5. If the Key Config Files auto-sync was set up (Step 6), remind the user:
@@ -500,7 +501,7 @@ After creating all files, give the user a concise summary:
    - Suggest documenting it in the project README's setup instructions.
 6. Explain the Learnings mechanism:
    - When the user corrects a mistake, Claude appends a one-line summary to `.claude/learnings.md` instead of modifying CLAUDE.md directly.
-   - This file grows uncurated over time. Running `/cc-config:optimize` reviews it and proposes promoting recurring patterns into CLAUDE.md or skills, and deleting one-off entries.
+   - This file grows uncurated over time. Running `/cc-config-optimize` reviews it and proposes promoting recurring patterns into CLAUDE.md or skills, and deleting one-off entries.
 7. Suggest committing the new config files to git.
 
 ## What NOT to do

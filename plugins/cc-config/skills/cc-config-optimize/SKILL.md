@@ -1,4 +1,5 @@
 ---
+name: cc-config-optimize
 description: Audit and optimize an existing Claude Code configuration against current best practices. Use this skill when a user asks to review, improve, clean up, or optimize their Claude Code setup, CLAUDE.md, settings, hooks, MCP servers, or skills. Also use when the user says things like "check my config", "is my CLAUDE.md too long", "reduce token costs", "tighten permissions", or "my Claude Code setup feels bloated". This skill assumes the project has code, and possibly documentation or OpenSpec specs, that inform the optimization.
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob
 argument-hint: "[optional: specific area to focus on, e.g. 'CLAUDE.md', 'hooks', 'costs']"
@@ -123,7 +124,7 @@ Check for these anti-patterns:
 
 **Git hooks and hook-manager drift:**
 
-`/cc-config:init` creates a project-local `.githooks/pre-commit` that runs `scripts/sync-config-table.sh` and activates it via `git config core.hooksPath .githooks`. If a hook manager like Husky is added later, it takes over `core.hooksPath` — the `.githooks/pre-commit` is still present in the repo but silently stops running. This is a silent drift scenario. Check for it:
+`/cc-config-init` creates a project-local `.githooks/pre-commit` that runs `scripts/sync-config-table.sh` and activates it via `git config core.hooksPath .githooks`. If a hook manager like Husky is added later, it takes over `core.hooksPath` — the `.githooks/pre-commit` is still present in the repo but silently stops running. This is a silent drift scenario. Check for it:
 
 1. Detect hook managers:
    - Husky: `husky` in `package.json` devDependencies, or `.husky/` directory present
@@ -291,7 +292,7 @@ After all changes:
 3. Compare key metrics to before (e.g., "CLAUDE.md: 247 lines → 62 lines").
 4. If learnings were reviewed: report how many entries were promoted, how many deleted, and how many remain.
 5. Note anything you deliberately left unchanged and why.
-6. Suggest running `/cc-config:optimize` again periodically (e.g., after major features, after a few weeks of work) to prevent config drift.
+6. Suggest running `/cc-config-optimize` again periodically (e.g., after major features, after a few weeks of work) to prevent config drift.
 7. Remind the user to commit the changes.
 
 ## Common optimization patterns
@@ -335,7 +336,7 @@ If CLAUDE.md says "always run prettier after editing" — that's a hook, not an 
 When `.claude/learnings.md` has accumulated entries, recurring patterns graduate into CLAUDE.md rules, skills, or hooks. One-off corrections get deleted. The file stays lean or gets removed entirely until the next correction cycle.
 
 **Hook-manager migration for sync-config-table:**
-When a project gains Husky or another hook manager after `/cc-config:init` was used, the `.githooks/pre-commit` goes silent because `core.hooksPath` is taken over. Migrate the sync script into the active hook manager's pre-commit hook and remove the now-dead `.githooks/` directory.
+When a project gains Husky or another hook manager after `/cc-config-init` was used, the `.githooks/pre-commit` goes silent because `core.hooksPath` is taken over. Migrate the sync script into the active hook manager's pre-commit hook and remove the now-dead `.githooks/` directory.
 
 ## What NOT to do
 
