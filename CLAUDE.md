@@ -4,17 +4,17 @@ Reusable Claude Code custom skills for configuration management. Install via `in
 
 ## Key Config Files
 
-| File                                  | Purpose                                                               |
-| ------------------------------------- | --------------------------------------------------------------------- |
-| `CLAUDE.md`                           | Project instructions, loaded every message                            |
-| `.claude/settings.json`               | Permissions, hooks, environment variables                             |
-| `.claude/skills/cc-init/SKILL.md`     | Skill: Bootstrap a best-practice Claude Code config for a new project |
-| `.claude/skills/cc-optimize/SKILL.md` | Skill: Audit and optimize an existing Claude Code configuration       |
-| `.claude/skills/cc-update/SKILL.md`   | Skill: Update installed skills to their latest versions               |
-| `.gitignore`                          | Git ignore patterns                                                   |
-| `.githooks/pre-commit`                | Reminds when staged skills are missing from sync-to-main.sh           |
-| `install.sh`                          | Installs all skills into a target project via curl                    |
-| `scripts/sync-to-main.sh`             | Copies product files from dev branch to main for distribution         |
+| File                                         | Purpose                                                               |
+| -------------------------------------------- | --------------------------------------------------------------------- |
+| `CLAUDE.md`                                  | Project instructions, loaded every message                            |
+| `.claude/settings.json`                      | Permissions, hooks, environment variables                             |
+| `.claude/skills/cc-config/init/SKILL.md`     | Skill: Bootstrap a best-practice Claude Code config for a new project |
+| `.claude/skills/cc-config/optimize/SKILL.md` | Skill: Audit and optimize an existing Claude Code configuration       |
+| `.claude/skills/cc-config/update/SKILL.md`   | Skill: Update installed skills to their latest versions               |
+| `.gitignore`                                 | Git ignore patterns                                                   |
+| `.githooks/pre-commit`                       | Reminds when staged skills are missing from sync-to-main.sh           |
+| `install.sh`                                 | Installs all skills into a target project via curl                    |
+| `scripts/sync-to-main.sh`                    | Copies product files from dev branch to main for distribution         |
 
 ## Structure
 

@@ -2,11 +2,11 @@
 
 Three Claude Code skills for setting up and maintaining a best-practice Claude Code configuration.
 
-**`/cc-init`** bootstraps a lean configuration for a new or unconfigured project — a more opinionated alternative to the built-in `/init`.
+**`/cc-config:init`** bootstraps a lean configuration for a new or unconfigured project — a more opinionated alternative to the built-in `/init`.
 
-**`/cc-optimize`** audits and improves an existing configuration against current best practices — useful after a project has grown, or periodically to prevent config drift.
+**`/cc-config:optimize`** audits and improves an existing configuration against current best practices — useful after a project has grown, or periodically to prevent config drift.
 
-**`/cc-update`** fetches the latest versions of all installed skills from this repository — run it any time you want to pick up improvements.
+**`/cc-config:update`** fetches the latest versions of all installed skills from this repository — run it any time you want to pick up improvements.
 
 All three skills work for software projects **and** content projects (static sites, article collections, documentation sets backed by a shared knowledge base). Detection covers code toolchains (npm, cargo, pip, composer, go, …) and content toolchains (Hugo, Jekyll, Astro, Eleventy, MkDocs, Vale, markdownlint).
 
@@ -17,9 +17,9 @@ All three skills are grounded in the consolidated recommendations from the [offi
 - [What problem do these skills solve?](#what-problem-do-these-skills-solve)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [`/cc-init` — Bootstrap a new project](#cc-init--bootstrap-a-new-project)
-  - [`/cc-optimize` — Audit and improve an existing setup](#cc-optimize--audit-and-improve-an-existing-setup)
-  - [`/cc-update` — Keep skills current](#cc-update--keep-skills-current)
+  - [`/cc-config:init` — Bootstrap a new project](#cc-init--bootstrap-a-new-project)
+  - [`/cc-config:optimize` — Audit and improve an existing setup](#cc-optimize--audit-and-improve-an-existing-setup)
+  - [`/cc-config:update` — Keep skills current](#cc-update--keep-skills-current)
   - [Recommended workflow](#recommended-workflow)
 - [Working with design systems](#working-with-design-systems)
   - [The two design artifacts and where they live](#the-two-design-artifacts-and-where-they-live)
@@ -37,9 +37,9 @@ The built-in `/init` generates a CLAUDE.md by scanning your repository. The resu
 
 These skills take a different approach:
 
-- **`/cc-init`** creates the minimum viable configuration that's correct from day one: a slim CLAUDE.md, hardened `permissions.deny`, a formatter hook if applicable, and cost-optimization defaults. It asks targeted questions instead of guessing, and uses TODO placeholders rather than hallucinating commands it can't verify.
+- **`/cc-config:init`** creates the minimum viable configuration that's correct from day one: a slim CLAUDE.md, hardened `permissions.deny`, a formatter hook if applicable, and cost-optimization defaults. It asks targeted questions instead of guessing, and uses TODO placeholders rather than hallucinating commands it can't verify.
 
-- **`/cc-optimize`** treats your existing configuration as a codebase to audit. It inventories every config file, measures CLAUDE.md line count, checks for known anti-patterns (bloat, missing hooks, hardcoded secrets, deprecated settings), and presents findings in three tiers — must fix, should fix, nice to have — before touching anything.
+- **`/cc-config:optimize`** treats your existing configuration as a codebase to audit. It inventories every config file, measures CLAUDE.md line count, checks for known anti-patterns (bloat, missing hooks, hardcoded secrets, deprecated settings), and presents findings in three tiers — must fix, should fix, nice to have — before touching anything.
 
 ## Installation
 
@@ -49,7 +49,7 @@ Run the install script from your project directory:
 curl -fsSL https://raw.githubusercontent.com/MichaelvanLaar/claude-code-config-skills/main/install.sh | bash
 ```
 
-This downloads `cc-init`, `cc-optimize`, and `cc-update` into `.claude/skills/`.
+This downloads `init`, `optimize`, and `update` into `.claude/skills/cc-config/`.
 
 To install into a specific directory, or to pin to a release tag:
 
@@ -76,31 +76,32 @@ rm install.sh
 your-project/
 └── .claude/
     └── skills/
-        ├── cc-init/
-        │   └── SKILL.md
-        ├── cc-optimize/
-        │   └── SKILL.md
-        └── cc-update/
-            └── SKILL.md
+        └── cc-config/
+            ├── init/
+            │   └── SKILL.md
+            ├── optimize/
+            │   └── SKILL.md
+            └── update/
+                └── SKILL.md
 ```
 
-After running `/cc-init`, additional files are created in your project (see [What the skills create and check](#what-the-skills-create-and-check)).
+After running `/cc-config:init`, additional files are created in your project (see [What the skills create and check](#what-the-skills-create-and-check)).
 
 ## Usage
 
-### `/cc-init` — Bootstrap a new project
+### `/cc-config:init` — Bootstrap a new project
 
 Start Claude Code in your project directory and invoke the skill:
 
 ```
-/cc-init
+/cc-config:init
 ```
 
 Or with a brief project description to skip some questions:
 
 ```
-/cc-init Next.js 14 e-commerce platform with Stripe and Postgres
-/cc-init Hugo site, 20 tutorial articles built from a shared knowledge base, output as Markdown
+/cc-config:init Next.js 14 e-commerce platform with Stripe and Postgres
+/cc-config:init Hugo site, 20 tutorial articles built from a shared knowledge base, output as Markdown
 ```
 
 The skill will:
@@ -121,20 +122,20 @@ The skill will:
 
 It deliberately does **not** set up MCP servers, create skills, or generate content it can't verify. Those decisions are premature for an empty project.
 
-### `/cc-optimize` — Audit and improve an existing setup
+### `/cc-config:optimize` — Audit and improve an existing setup
 
 After your project has some code (or anytime you want to check the config):
 
 ```
-/cc-optimize
+/cc-config:optimize
 ```
 
 Or focused on a specific area:
 
 ```
-/cc-optimize CLAUDE.md
-/cc-optimize hooks
-/cc-optimize costs
+/cc-config:optimize CLAUDE.md
+/cc-config:optimize hooks
+/cc-config:optimize costs
 ```
 
 The skill will:
@@ -147,29 +148,29 @@ The skill will:
 6. **Apply** approved changes with before/after summaries.
 7. **Report** metrics (e.g., "CLAUDE.md: 247 lines → 62 lines", "Learnings: 8 entries → 0").
 
-### `/cc-update` — Keep skills current
+### `/cc-config:update` — Keep skills current
 
 After the initial install, run this from within Claude Code any time you want to pull the latest versions:
 
 ```
-/cc-update
+/cc-config:update
 ```
 
-It updates `cc-init`, `cc-optimize`, and itself — only for skills already installed in the project. Skills you have not installed are left alone.
+It updates `cc-config:init`, `cc-config:optimize`, and itself — only for skills already installed in the project. Skills you have not installed are left alone.
 
 ### Recommended workflow
 
 ```
-Day 1:    /cc-init                     ← Bootstrap config for empty project
+Day 1:    /cc-config:init                     ← Bootstrap config for empty project
           ... start coding ...
 
-Week 1:   /cc-optimize                 ← First optimization pass with real code context
+Week 1:   /cc-config:optimize                 ← First optimization pass with real code context
           ... continue building ...
 
-Ongoing:  /cc-optimize                 ← Periodic hygiene checks
-          /cc-optimize CLAUDE.md       ← After CLAUDE.md has grown significantly
-          /cc-optimize costs           ← When token spend feels high
-          /cc-update                   ← After pulling updates from this repo
+Ongoing:  /cc-config:optimize                 ← Periodic hygiene checks
+          /cc-config:optimize CLAUDE.md       ← After CLAUDE.md has grown significantly
+          /cc-config:optimize costs           ← When token spend feels high
+          /cc-config:update                   ← After pulling updates from this repo
 ```
 
 ## Working with design systems
@@ -191,48 +192,48 @@ You have finished (or sketched) the design in Claude Design before setting up th
 
 1. Export or author `DESIGN.md` and place it at the **project root**.
 2. Place Claude Design handoff artifacts (`PROMPT.md`, `design-notes.md`, `screenshots/`) in **`.claude/context/design/`** — create the folder manually if needed.
-3. Run **`/cc-init`**. It detects `DESIGN.md` during the scan, wires it into CLAUDE.md with the right `@`-import trigger, and includes both `DESIGN.md` and `.claude/context/design/` files in the Key Config Files table automatically.
+3. Run **`/cc-config:init`**. It detects `DESIGN.md` during the scan, wires it into CLAUDE.md with the right `@`-import trigger, and includes both `DESIGN.md` and `.claude/context/design/` files in the Key Config Files table automatically.
 
 #### B — Code first, design later
 
 You bootstrapped the project first and are adding a design system later.
 
-1. Run **`/cc-init`** as usual to set up the project config.
+1. Run **`/cc-config:init`** as usual to set up the project config.
 2. When the design is ready: place `DESIGN.md` at the project root and handoff artifacts in `.claude/context/design/`.
-3. Run **`/cc-optimize`**. It detects the unreferenced `DESIGN.md` and flags it as "should fix" — approve the suggestion and it adds the `@`-import to CLAUDE.md and updates the Key Config Files table.
+3. Run **`/cc-config:optimize`**. It detects the unreferenced `DESIGN.md` and flags it as "should fix" — approve the suggestion and it adds the `@`-import to CLAUDE.md and updates the Key Config Files table.
 
 #### C — No Claude Design, but an existing DESIGN.md
 
 You use a different tool (Figma + Stitch, hand-authored tokens, etc.) that already produced a `DESIGN.md`.
 
-1. Place `DESIGN.md` at the **project root** before running `/cc-init`.
-2. Run **`/cc-init`** — it picks it up automatically. No extra steps needed.
+1. Place `DESIGN.md` at the **project root** before running `/cc-config:init`.
+2. Run **`/cc-config:init`** — it picks it up automatically. No extra steps needed.
 
 #### The two rules that cover every case
 
 1. **`DESIGN.md` always lives at the project root** — this is the community convention; agents discover it there without any configuration.
 2. **Claude Design handoff artifacts always live in `.claude/context/design/`** — this keeps them versioned, organized, and visible in the Key Config Files table without polluting the root.
 
-If you add design artifacts after running `/cc-init`, a single `/cc-optimize` pass closes the gap.
+If you add design artifacts after running `/cc-config:init`, a single `/cc-config:optimize` pass closes the gap.
 
 ## What the skills create and check
 
 ### Configuration files
 
-| File                           | Created by            | Purpose                                                                                                                     |
-| ------------------------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `CLAUDE.md`                    | `/cc-init`            | Project instructions, loaded every message (target: 40–80 lines)                                                            |
-| `AGENTS.md`                    | `/cc-init`            | Vendor-neutral agent instructions (if multi-tool environment)                                                               |
-| `DESIGN.md`                    | manual / design tool  | Design system spec — YAML tokens + Markdown rationale; wired into CLAUDE.md via `@`-import by `/cc-init` and `/cc-optimize` |
-| `.claude/settings.json`        | `/cc-init`            | Permissions, hooks, environment variables                                                                                   |
-| `.claude/context/`             | `/cc-init` (optional) | Shared domain context folder — brand, architecture, etc.; skills reference files here via progressive disclosure            |
-| `.claude/context/design/`      | manual (user)         | Claude Design handoff artifacts: `PROMPT.md`, `design-notes.md`, `screenshots/`                                             |
-| `.claude/learnings.md`         | auto (by Claude)      | One-line corrections Claude appends instead of modifying CLAUDE.md directly                                                 |
-| `scripts/sync-config-table.sh` | `/cc-init`            | Keeps the Key Config Files table in CLAUDE.md in sync — including `DESIGN.md` and `.claude/context/` files                  |
-| `.githooks/pre-commit`         | `/cc-init`            | Runs the sync script before each commit                                                                                     |
-| `.claude/skills/cc-update`     | `install.sh`          | Updates installed skills to their latest versions (`/cc-update`)                                                            |
-| `.claude/skills/*`             | manual                | Recurring workflows (audited by `/cc-optimize`)                                                                             |
-| `.mcp.json`                    | manual                | MCP server configuration (audited by `/cc-optimize`)                                                                        |
+| File                              | Created by                   | Purpose                                                                                                                                   |
+| --------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLAUDE.md`                       | `/cc-config:init`            | Project instructions, loaded every message (target: 40–80 lines)                                                                          |
+| `AGENTS.md`                       | `/cc-config:init`            | Vendor-neutral agent instructions (if multi-tool environment)                                                                             |
+| `DESIGN.md`                       | manual / design tool         | Design system spec — YAML tokens + Markdown rationale; wired into CLAUDE.md via `@`-import by `/cc-config:init` and `/cc-config:optimize` |
+| `.claude/settings.json`           | `/cc-config:init`            | Permissions, hooks, environment variables                                                                                                 |
+| `.claude/context/`                | `/cc-config:init` (optional) | Shared domain context folder — brand, architecture, etc.; skills reference files here via progressive disclosure                          |
+| `.claude/context/design/`         | manual (user)                | Claude Design handoff artifacts: `PROMPT.md`, `design-notes.md`, `screenshots/`                                                           |
+| `.claude/learnings.md`            | auto (by Claude)             | One-line corrections Claude appends instead of modifying CLAUDE.md directly                                                               |
+| `scripts/sync-config-table.sh`    | `/cc-config:init`            | Keeps the Key Config Files table in CLAUDE.md in sync — including `DESIGN.md` and `.claude/context/` files                                |
+| `.githooks/pre-commit`            | `/cc-config:init`            | Runs the sync script before each commit                                                                                                   |
+| `.claude/skills/cc-config/update` | `install.sh`                 | Updates installed skills to their latest versions (`/cc-config:update`)                                                                   |
+| `.claude/skills/*`                | manual                       | Recurring workflows (audited by `/cc-config:optimize`)                                                                                    |
+| `.mcp.json`                       | manual                       | MCP server configuration (audited by `/cc-config:optimize`)                                                                               |
 
 ### Key best practices applied
 
@@ -245,7 +246,7 @@ If you add design artifacts after running `/cc-init`, a single `/cc-optimize` pa
 - **Cost-optimization defaults**: auto-compact at 50% instead of the default 83%, capped thinking tokens, optional Haiku subagents.
 - **Verification loops**: test commands in CLAUDE.md so Claude can verify its own work (2–3× quality improvement).
 - **Key Config Files auto-sync**: a pre-commit hook keeps the config file table in CLAUDE.md current — new files get a `TODO` placeholder, deleted files are removed automatically. Covers `DESIGN.md` and `.claude/context/` subdirectories. Uses `.githooks/` (no Husky dependency). Requires one-time activation per clone: `git config core.hooksPath .githooks`.
-- **Learnings graduation**: when Claude makes a mistake, it appends a one-line correction to `.claude/learnings.md` instead of editing CLAUDE.md directly. Running `/cc-optimize` reviews the file: recurring patterns graduate into CLAUDE.md rules, skills, or hooks; one-off entries get deleted. Keeps CLAUDE.md stable between audits.
+- **Learnings graduation**: when Claude makes a mistake, it appends a one-line correction to `.claude/learnings.md` instead of editing CLAUDE.md directly. Running `/cc-config:optimize` reviews the file: recurring patterns graduate into CLAUDE.md rules, skills, or hooks; one-off entries get deleted. Keeps CLAUDE.md stable between audits.
 - **Skill feedback loops**: skills should end with a step that asks for feedback and logs corrections to `.claude/learnings.md`, making the learnings loop active rather than passive.
 - **Scheduling**: once recurring multi-step workflows emerge, the `/schedule` skill can automate them — run a chain of skills on a cron schedule and land the output in a review folder for human sign-off.
 

@@ -11,30 +11,30 @@ REPO="MichaelvanLaar/claude-code-config-skills"
 REF="${REF:-main}"
 BASE_URL="https://raw.githubusercontent.com/$REPO/$REF"
 TARGET="${1:-.}"
-SKILLS=(cc-init cc-optimize cc-update)
+SKILLS=(init optimize update)
 
 if ! command -v curl &>/dev/null; then
   echo "error: curl is required but not found. Install curl and try again." >&2
   exit 1
 fi
 
-echo "Installing Claude Code skills into $TARGET/.claude/skills/ (ref: $REF)"
+echo "Installing Claude Code skills into $TARGET/.claude/skills/cc-config/ (ref: $REF)"
 echo ""
 
 for skill in "${SKILLS[@]}"; do
-  dir="$TARGET/.claude/skills/$skill"
+  dir="$TARGET/.claude/skills/cc-config/$skill"
   mkdir -p "$dir"
-  if curl -fsSL "$BASE_URL/.claude/skills/$skill/SKILL.md" -o "$dir/SKILL.md"; then
-    echo "  ✓ $skill"
+  if curl -fsSL "$BASE_URL/.claude/skills/cc-config/$skill/SKILL.md" -o "$dir/SKILL.md"; then
+    echo "  ✓ cc-config:$skill"
   else
-    echo "  ✗ $skill (download failed)" >&2
+    echo "  ✗ cc-config:$skill (download failed)" >&2
     exit 1
   fi
 done
 
 echo ""
 echo "Done. Start Claude Code in $TARGET and run:"
-echo "  /cc-init      — bootstrap a new or unconfigured project"
-echo "  /cc-optimize  — audit and improve an existing setup"
+echo "  /cc-config:init      — bootstrap a new or unconfigured project"
+echo "  /cc-config:optimize  — audit and improve an existing setup"
 echo ""
-echo "To keep skills current, run /cc-update from within Claude Code."
+echo "To keep skills current, run /cc-config:update from within Claude Code."
