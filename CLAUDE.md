@@ -10,8 +10,8 @@ Reusable Claude Code skills for configuration management, distributed as a Claud
 | `.claude/settings.json`                        | Permissions, hooks, environment variables                               |
 | `.claude-plugin/marketplace.json`              | Plugin marketplace manifest (makes this repo a Claude Code marketplace) |
 | `plugins/cc-config/.claude-plugin/plugin.json` | Plugin manifest for the cc-config plugin                                |
-| `plugins/cc-config/skills/init/SKILL.md`       | Skill: Bootstrap a best-practice Claude Code config for a new project   |
-| `plugins/cc-config/skills/optimize/SKILL.md`   | Skill: Audit and optimize an existing Claude Code configuration         |
+| `plugins/cc-config/commands/init.md`           | Command: Bootstrap a best-practice Claude Code config for a new project |
+| `plugins/cc-config/commands/optimize.md`       | Command: Audit and optimize an existing Claude Code configuration       |
 | `install.sh`                                   | Deprecated install script (now a shim pointing to plugin install)       |
 | `.gitignore`                                   | Git ignore patterns                                                     |
 
