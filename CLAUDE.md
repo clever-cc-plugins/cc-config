@@ -1,4 +1,4 @@
-# Claude Code Config Skills
+# cc-config
 
 Reusable Claude Code skills for configuration management, distributed as a Claude Code plugin. Install via the plugin system (see README).
 
@@ -23,7 +23,7 @@ To use the cc-config skills locally in this repo (dogfooding), add the local mar
 
 ```
 /plugin marketplace add ./
-/plugin install cc-config@cc-config-skills
+/plugin install cc-config@cc-config
 ```
 
 ## Don't

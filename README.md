@@ -1,4 +1,4 @@
-# Claude Code Config Skills
+# cc-config
 
 Two Claude Code skills for setting up and maintaining a best-practice Claude Code configuration, distributed as a Claude Code plugin.
 
@@ -12,7 +12,7 @@ Both skills are grounded in the consolidated recommendations from the [official 
 
 ## Table of Contents
 
-- [Claude Code Config Skills](#claude-code-config-skills)
+- [cc-config](#cc-config)
   - [Table of Contents](#table-of-contents)
   - [What problem do these skills solve?](#what-problem-do-these-skills-solve)
   - [Installation](#installation)
@@ -51,8 +51,8 @@ These skills take a different approach:
 Open Claude Code in any project and run:
 
 ```
-/plugin marketplace add MichaelvanLaar/claude-code-config-skills
-/plugin install cc-config@cc-config-skills
+/plugin marketplace add MichaelvanLaar/cc-config
+/plugin install cc-config@cc-config
 ```
 
 That's it. Claude Code downloads the skills and makes `/cc-config-init` and `/cc-config-optimize` available immediately.
@@ -65,7 +65,7 @@ The plugin system checks for updates automatically on startup. For third-party m
 
 1. Run `/plugin` in Claude Code
 2. Go to the **Marketplaces** tab
-3. Turn on auto-update for `MichaelvanLaar/claude-code-config-skills`
+3. Turn on auto-update for `MichaelvanLaar/cc-config`
 
 Once enabled, Claude Code updates the skills on startup whenever a new version is available.
 
@@ -76,13 +76,13 @@ After running `/cc-config-init`, additional files are created in your project (s
 To remove the plugin and the marketplace in one step:
 
 ```
-/plugin marketplace remove cc-config-skills
+/plugin marketplace remove cc-config
 ```
 
 Removing the marketplace automatically uninstalls any plugins installed from it. To remove only the plugin while keeping the marketplace:
 
 ```
-/plugin uninstall cc-config@cc-config-skills
+/plugin uninstall cc-config@cc-config
 ```
 
 ## Usage
