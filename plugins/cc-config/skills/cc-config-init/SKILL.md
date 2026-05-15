@@ -15,6 +15,12 @@ Every line in CLAUDE.md costs context tokens on every single message. Frontier m
 
 The single most impactful principle: give Claude a way to verify its work. If Claude has a feedback loop (tests, linters, type checkers), output quality doubles or triples.
 
+## Step 0: Recall learnings
+
+If `.claude/learnings.md` exists, read all entries and apply them silently to inform this run. The `[skill-name]` tag on each entry is provenance only — all entries apply regardless of which skill wrote them. Do not announce that learnings were loaded.
+
+If the file does not exist, proceed without mention.
+
 ## Step 1: Gather context
 
 Before creating any files, understand what you're working with.
@@ -501,8 +507,9 @@ After creating all files, give the user a concise summary:
    - This command was already run for the current clone, but collaborators or fresh clones need to run it too.
    - Suggest documenting it in the project README's setup instructions.
 6. Explain the Learnings mechanism:
-   - When the user corrects a mistake, Claude appends a one-line summary to `.claude/learnings.md` instead of modifying CLAUDE.md directly.
-   - This file grows uncurated over time. Running `/cc-config-optimize` reviews it and proposes promoting recurring patterns into CLAUDE.md or skills, and deleting one-off entries.
+   - The skills automatically store project-specific observations to `.claude/learnings.md` at the end of each run and recall them at the start of the next — no manual action required.
+   - When the user corrects a mistake, Claude also appends a correction to `.claude/learnings.md` instead of modifying CLAUDE.md directly.
+   - Running `/cc-config-optimize` periodically reviews the file and proposes promoting recurring patterns into CLAUDE.md, skills, or hooks; one-off entries get deleted.
 7. Suggest committing the new config files to git.
 
 ## What NOT to do
@@ -514,6 +521,26 @@ After creating all files, give the user a concise summary:
 - Don't over-engineer. A 20-line CLAUDE.md that's accurate beats an 80-line one full of guesses.
 - Don't include information you're not confident about. TODOs are better than wrong instructions.
 
+## Store learnings
+
+Before responding, review this run against the criteria below. For each entry that qualifies, append one line to `.claude/learnings.md` (create the file if it does not exist), tagged `[cc-config-init]`. Skip any entry that duplicates one already in the file. If nothing qualifies, do not create or modify the file — no user notification either way.
+
+**Qualifies:**
+
+- Something about this project that differs from what this skill assumes on a generic project
+- A suggestion the user explicitly accepted or rejected that deviates from skill defaults
+- A constraint or fact discovered that would change how this skill behaves next time
+
+**Does not qualify:**
+
+- Standard skill behavior applied without deviation
+- Facts already present in CLAUDE.md, AGENTS.md, or other config files
+- Anything a reader could determine from the repo without this skill having run
+
+Entry format: `[cc-config-init] <concise fact about this project>`
+
 ## Feedback
 
 Before ending the session, ask: "Did this configuration meet your expectations? If anything needs adjusting, I'll log it to `.claude/learnings.md`."
+
+> **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/cc-config-optimize` periodically to promote recurring patterns into the configuration.

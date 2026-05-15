@@ -15,6 +15,12 @@ Configuration is a multiplier, but only if it's lean. A 60-line CLAUDE.md with p
 
 The guiding question for every instruction in CLAUDE.md: "Would removing this line cause Claude to make a concrete mistake?" If no — remove it.
 
+## Step 0: Recall learnings
+
+If `.claude/learnings.md` exists, read all entries and apply them silently to inform this run. The `[skill-name]` tag on each entry is provenance only — all entries apply regardless of which skill wrote them. Do not announce that learnings were loaded.
+
+If the file does not exist, proceed without mention.
+
 ## Step 1: Full inventory
 
 Read and catalog everything that exists. Do this thoroughly before suggesting any changes.
@@ -347,6 +353,26 @@ When a project gains Husky or another hook manager after `/cc-config-init` was u
 - Don't remove functionality. If something serves a purpose, keep it — just optimize how it's expressed.
 - Don't make the config dependent on tools or servers the user hasn't installed.
 
+## Store learnings
+
+Before responding, review this run against the criteria below. For each entry that qualifies, append one line to `.claude/learnings.md` (create the file if it does not exist), tagged `[cc-config-optimize]`. Skip any entry that duplicates one already in the file or that was promoted or deleted by Step 2g in this run. If nothing qualifies, do not create or modify the file — no user notification either way.
+
+**Qualifies:**
+
+- Something about this project that differs from what this skill assumes on a generic project
+- A suggestion the user explicitly accepted or rejected that deviates from skill defaults
+- A constraint or fact discovered that would change how this skill behaves next time
+
+**Does not qualify:**
+
+- Standard skill behavior applied without deviation
+- Facts already present in CLAUDE.md, AGENTS.md, or other config files
+- Anything a reader could determine from the repo without this skill having run
+
+Entry format: `[cc-config-optimize] <concise fact about this project>`
+
 ## Feedback
 
 Before ending the session, ask: "Did this optimization meet your expectations? If anything needs adjusting, I'll log it to `.claude/learnings.md`."
+
+> **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/cc-config-optimize` periodically to promote recurring patterns into the configuration.
