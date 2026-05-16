@@ -4,24 +4,23 @@ Reusable Claude Code skills for configuration management, distributed as a Claud
 
 ## Key Config Files
 
-| File                                                   | Purpose                                                                 |
-| ------------------------------------------------------ | ----------------------------------------------------------------------- |
-| `CLAUDE.md`                                            | Project instructions, loaded every message                              |
-| `.claude/settings.json`                                | Permissions, hooks, environment variables                               |
-| `.claude-plugin/marketplace.json`                      | Plugin marketplace manifest (makes this repo a Claude Code marketplace) |
-| `plugins/cc-config/.claude-plugin/plugin.json`         | Plugin manifest for the cc-config plugin                                |
-| `plugins/cc-config/skills/cc-config-init/SKILL.md`     | Skill: Bootstrap a best-practice Claude Code config for a new project   |
-| `plugins/cc-config/skills/cc-config-optimize/SKILL.md` | Skill: Audit and optimize an existing Claude Code configuration         |
-| `.gitignore`                                           | Git ignore patterns                                                     |
-| `.claudeignore`                                        | Paths excluded from Claude Code indexing                                |
-| `.githooks/pre-commit`                                 | Pre-commit secret scanning via gitleaks                                 |
+| File                                                   | Purpose                                                               |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
+| `CLAUDE.md`                                            | Project instructions, loaded every message                            |
+| `.claude/settings.json`                                | Permissions, hooks, environment variables                             |
+| `plugins/cc-config/.claude-plugin/plugin.json`         | Plugin manifest for the cc-config plugin                              |
+| `plugins/cc-config/skills/cc-config-init/SKILL.md`     | Skill: Bootstrap a best-practice Claude Code config for a new project |
+| `plugins/cc-config/skills/cc-config-optimize/SKILL.md` | Skill: Audit and optimize an existing Claude Code configuration       |
+| `.gitignore`                                           | Git ignore patterns                                                   |
+| `.claudeignore`                                        | Paths excluded from Claude Code indexing                              |
+| `.githooks/pre-commit`                                 | Pre-commit secret scanning via gitleaks                               |
 
 ## Setup
 
-To use the cc-config skills locally in this repo (dogfooding), add the local marketplace once:
+To use the cc-config skills locally in this repo (dogfooding), install from the cc-plugins marketplace:
 
 ```
-/plugin marketplace add ./
+/plugin marketplace add MichaelvanLaar/cc-plugins
 /plugin install cc-config@cc-config
 ```
 
