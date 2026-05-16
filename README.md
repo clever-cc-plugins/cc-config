@@ -104,7 +104,7 @@ Or with a brief project description to skip some questions:
 
 The skill will:
 
-1. **Scan** for existing config, project files, quality tools, sensitive files, and design system artifacts (`DESIGN.md`, `.claude/context/design/`).
+1. **Scan** for existing config, project files, quality tools, sensitive files, and design system artifacts (`DESIGN.md`, `context/design/`).
 2. **Ask** targeted questions about anything it can't determine — including whether there is shared domain knowledge (brand voice, ICP, architecture decisions, API contracts) that should live in a shared context folder for all future skills to reference.
 3. **Create** these files:
    - `.claude/settings.json` — permissions, hooks (if a formatter was detected), cost-optimization env vars
@@ -138,7 +138,7 @@ Or focused on a specific area:
 
 The skill will:
 
-1. **Inventory** every configuration file, design system artifacts (`DESIGN.md`, `.claude/context/design/`), the project's tech stack, and available context (code, docs, OpenSpec specs). This now includes `.claude/learnings.md` and reports the number of entries it contains.
+1. **Inventory** every configuration file, design system artifacts (`DESIGN.md`, `context/design/`), the project's tech stack, and available context (code, docs, OpenSpec specs). This now includes `.claude/learnings.md` and reports the number of entries it contains.
 2. **Analyze** against best practices, checking for bloat, missing essentials (including a Learnings section and an unreferenced `DESIGN.md`), security gaps, cost optimization opportunities, and multi-tool consistency.
 3. **Review learnings**: if `.claude/learnings.md` exists, group entries into recurring patterns vs. one-offs and propose promoting patterns into CLAUDE.md, a skill, or a hook — then deleting resolved entries.
 4. **Present** findings grouped as must fix / should fix / nice to have, with explanations for each.
@@ -164,10 +164,10 @@ Ongoing:  /cc-config-optimize                 ← Periodic hygiene checks
 
 ### The two design artifacts and where they live
 
-| Artifact                        | Where it lives            | What it is                                                                                                                                                                                |
-| ------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DESIGN.md`                     | Project root              | Persistent design system spec — YAML tokens + Markdown rationale. Auto-read by Claude Code, Cursor, Copilot, and other agents. Think of it like `tsconfig.json` for your visual language. |
-| Claude Design handoff artifacts | `.claude/context/design/` | Point-in-time exports from Claude Design: `PROMPT.md`, `design-notes.md`, `screenshots/`. Versioned alongside code, out of root clutter.                                                  |
+| Artifact                        | Where it lives    | What it is                                                                                                                                                                                |
+| ------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DESIGN.md`                     | Project root      | Persistent design system spec — YAML tokens + Markdown rationale. Auto-read by Claude Code, Cursor, Copilot, and other agents. Think of it like `tsconfig.json` for your visual language. |
+| Claude Design handoff artifacts | `context/design/` | Point-in-time exports from Claude Design: `PROMPT.md`, `design-notes.md`, `screenshots/`. Versioned alongside code, out of root clutter.                                                  |
 
 `DESIGN.md` is an open-source format (originated from Google Stitch, broadly adopted). Claude Design's "Handoff to Claude Code" export produces a bundle of implementation-ready artifacts — these two things are complementary, not competing.
 
@@ -178,15 +178,15 @@ Ongoing:  /cc-config-optimize                 ← Periodic hygiene checks
 You have finished (or sketched) the design in Claude Design before setting up the project config.
 
 1. Export or author `DESIGN.md` and place it at the **project root**.
-2. Place Claude Design handoff artifacts (`PROMPT.md`, `design-notes.md`, `screenshots/`) in **`.claude/context/design/`** — create the folder manually if needed.
-3. Run **`/cc-config-init`**. It detects `DESIGN.md` during the scan, wires it into CLAUDE.md with the right `@`-import trigger, and includes both `DESIGN.md` and `.claude/context/design/` files in the Key Config Files table automatically.
+2. Place Claude Design handoff artifacts (`PROMPT.md`, `design-notes.md`, `screenshots/`) in **`context/design/`** — create the folder manually if needed.
+3. Run **`/cc-config-init`**. It detects `DESIGN.md` during the scan, wires it into CLAUDE.md with the right `@`-import trigger, and includes both `DESIGN.md` and `context/design/` files in the Key Config Files table automatically.
 
 #### B — Code first, design later
 
 You bootstrapped the project first and are adding a design system later.
 
 1. Run **`/cc-config-init`** as usual to set up the project config.
-2. When the design is ready: place `DESIGN.md` at the project root and handoff artifacts in `.claude/context/design/`.
+2. When the design is ready: place `DESIGN.md` at the project root and handoff artifacts in `context/design/`.
 3. Run **`/cc-config-optimize`**. It detects the unreferenced `DESIGN.md` and flags it as "should fix" — approve the suggestion and it adds the `@`-import to CLAUDE.md and updates the Key Config Files table.
 
 #### C — No Claude Design, but an existing DESIGN.md
@@ -199,7 +199,7 @@ You use a different tool (Figma + Stitch, hand-authored tokens, etc.) that alrea
 #### The two rules that cover every case
 
 1. **`DESIGN.md` always lives at the project root** — this is the community convention; agents discover it there without any configuration.
-2. **Claude Design handoff artifacts always live in `.claude/context/design/`** — this keeps them versioned, organized, and visible in the Key Config Files table without polluting the root.
+2. **Claude Design handoff artifacts always live in `context/design/`** — this keeps them versioned, organized, and visible in the Key Config Files table without polluting the root.
 
 If you add design artifacts after running `/cc-config-init`, a single `/cc-config-optimize` pass closes the gap.
 
@@ -214,7 +214,7 @@ If you add design artifacts after running `/cc-config-init`, a single `/cc-confi
 | `DESIGN.md`                    | manual / design tool         | Design system spec — YAML tokens + Markdown rationale; wired into CLAUDE.md via `@`-import by `/cc-config-init` and `/cc-config-optimize` |
 | `.claude/settings.json`        | `/cc-config-init`            | Permissions, hooks, environment variables                                                                                                 |
 | `context/`                     | `/cc-config-init` (optional) | Shared domain context folder at project root — brand, architecture, etc.; registered in a `## Context files` table in CLAUDE.md           |
-| `.claude/context/design/`      | manual (user)                | Claude Design handoff artifacts: `PROMPT.md`, `design-notes.md`, `screenshots/`                                                           |
+| `context/design/`              | manual (user)                | Claude Design handoff artifacts: `PROMPT.md`, `design-notes.md`, `screenshots/`                                                           |
 | `.claude/learnings.md`         | auto (by skills)             | Project-specific observations auto-stored by skills at run end; also captures user-corrections instead of CLAUDE.md edits                 |
 | `scripts/sync-config-table.sh` | `/cc-config-init`            | Keeps the Key Config Files table in CLAUDE.md in sync — including `DESIGN.md` and `context/` files                                        |
 | `.githooks/pre-commit`         | `/cc-config-init`            | Runs the sync script before each commit; auto-stages CLAUDE.md when the table changes                                                     |
@@ -225,7 +225,7 @@ If you add design artifacts after running `/cc-config-init`, a single `/cc-confi
 
 - **Lean CLAUDE.md**: every line costs tokens on every message. Remove anything the linter enforces, Claude already knows, or that's only relevant sometimes (move to a skill).
 - **Progressive disclosure**: use `@`-imports for reference docs instead of inlining them. Reduces token waste by up to 59%.
-- **Domain context folder**: shared knowledge (brand voice, ICP, architecture decisions, API contracts) lives in `context/` at the project root — registered in a `## Context files` table in CLAUDE.md so skills can discover and load files on demand. Claude Design handoff artifacts belong in `.claude/context/design/` (a separate, distinct location).
+- **Domain context folder**: shared knowledge (brand voice, ICP, architecture decisions, API contracts) lives in `context/` at the project root — registered in a `## Context files` table in CLAUDE.md so skills can discover and load files on demand. Claude Design handoff artifacts belong in `context/design/`.
 - **Design system integration**: `DESIGN.md` at the project root is wired into CLAUDE.md via `@DESIGN.md **Read when:** building or editing any UI component`. Without this pointer Claude ignores the file for design decisions.
 - **`permissions.deny`**: block `.env`, secrets, and destructive commands. Replaces the deprecated `ignorePatterns`.
 - **Formatter hooks**: deterministic PostToolUse hooks beat instructions like "always run prettier" — the hook runs every time, the instruction might be ignored.
@@ -240,7 +240,7 @@ If you add design artifacts after running `/cc-config-init`, a single `/cc-confi
 
 - Works with any programming language, framework, or build tool.
 - Works with content projects: static-site generators (Hugo, Jekyll, Astro, Eleventy, MkDocs), article collections, documentation sets, and Markdown-driven workflows. Knowledge bases and style guides can be referenced via `@`-imports for progressive disclosure rather than inlined into CLAUDE.md.
-- Works with design-system-driven projects: detects `DESIGN.md` at the project root and Claude Design handoff artifacts in `.claude/context/design/`, and wires them into CLAUDE.md correctly.
+- Works with design-system-driven projects: detects `DESIGN.md` at the project root and Claude Design handoff artifacts in `context/design/`, and wires them into CLAUDE.md correctly.
 - Supports projects using [OpenSpec](https://github.com/Fission-AI/OpenSpec/) for structured change management.
 - Supports multi-tool AI environments (Codex, Gemini, Cursor, Copilot) via AGENTS.md.
 - Requires Claude Code (CLI or VS Code extension).

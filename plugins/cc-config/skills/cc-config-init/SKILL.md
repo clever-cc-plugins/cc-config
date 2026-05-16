@@ -31,7 +31,7 @@ Before creating any files, understand what you're working with.
    - **Code**: `package.json`, `composer.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, `Makefile`, `Gemfile`, `pom.xml`, `build.gradle`, any `*.sln` or `*.csproj` files.
    - **Content / static sites / docs**: `hugo.toml`, `config.toml`, `config.yaml` (Hugo), `_config.yml` (Jekyll), `astro.config.*`, `.eleventy.js`, `mkdocs.yml`, `content/`, `articles/`, `posts/`, `_posts/`, dominant `.md` files, knowledge base or style guide files (`STYLE.md`, `style-guide.md`).
    - Always check `README.md` for purpose.
-   - **Design system**: `DESIGN.md` at the project root (open-source format — YAML design tokens + Markdown rationale; Claude Code and other agents read it automatically). Also check `.claude/context/design/` for Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/).
+   - **Design system**: `DESIGN.md` at the project root (open-source format — YAML design tokens + Markdown rationale; Claude Code and other agents read it automatically). Also check `context/design/` for Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/).
 4. Check for existing quality tools:
    - **Code**: `.eslintrc*`, `.prettierrc*`, `phpcs.xml*`, `rustfmt.toml`, `.editorconfig`, CI configs (`.github/workflows/`, `.gitlab-ci.yml`), pre-commit configs.
    - **Content**: `.vale.ini` / `vale.ini`, `.markdownlint.{json,yaml,yml}`, prettier configured for Markdown.
@@ -166,7 +166,7 @@ Register each context file in the `## Context files` table in CLAUDE.md (see Ste
 
 When Claude Code starts in any subfolder, it reads CLAUDE.md files up the directory tree, so a session in `campaigns/product-xy/june-2026/` automatically gets company context (via root CLAUDE.md) plus campaign context (via the local CLAUDE.md). Skills invoked in that session inherit all of it without hard-coded absolute paths to shared files. Guide the user to create and maintain CLAUDE.md files at each level where the context meaningfully changes as the project structure grows.
 
-**Claude Design handoffs:** If the project uses Claude Design (Anthropic's visual design tool), direct the user to place Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/) in `.claude/context/design/` — not the project root. This keeps handoff snapshots versioned alongside the codebase without cluttering the root. `DESIGN.md` is different: it is a persistent, project-wide design system spec (YAML tokens + Markdown rationale) that lives at the project root and is auto-read by Claude Code and other agents. If `DESIGN.md` already exists or is being added, wire it into CLAUDE.md with `@DESIGN.md **Read when:** building or editing any UI component` — do not copy its contents into `context/`.
+**Claude Design handoffs:** If the project uses Claude Design (Anthropic's visual design tool), direct the user to place Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/) in `context/design/` — not the project root. This keeps handoff snapshots versioned alongside the codebase without cluttering the root. `DESIGN.md` is different: it is a persistent, project-wide design system spec (YAML tokens + Markdown rationale) that lives at the project root and is auto-read by Claude Code and other agents. If `DESIGN.md` already exists or is being added, wire it into CLAUDE.md with `@DESIGN.md **Read when:** building or editing any UI component` — do not copy its contents into `context/`.
 
 ## Step 3: Create CLAUDE.md
 

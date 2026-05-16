@@ -37,7 +37,7 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - `.claude/agents/*.md`
 - `.claude/learnings.md`
 - `context/` (domain context files at project root — company profile, brand voice, architecture decisions, etc.)
-- `.claude/context/design/` (Claude Design handoff artifacts — PROMPT.md, design-notes.md, screenshots/)
+- `context/design/` (Claude Design handoff artifacts — PROMPT.md, design-notes.md, screenshots/)
 - `DESIGN.md` (root-level design system spec — YAML tokens + Markdown rationale; auto-read by Claude Code and other agents)
 - `.mcp.json` (project root)
 - `~/.claude/CLAUDE.md` (user level — read but don't modify without asking)
@@ -55,7 +55,7 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - Directory structure and apparent architecture patterns
 - Hook managers and their hook files (`.husky/`, `lefthook.yml`, `.pre-commit-config.yaml`)
 - Project-local git hooks directory (`.githooks/`) and sync scripts (`scripts/sync-config-table.{sh,js}`)
-- Design system artifacts: `DESIGN.md` at the project root (persistent design system spec); `.claude/context/design/` for Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/)
+- Design system artifacts: `DESIGN.md` at the project root (persistent design system spec); `context/design/` for Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/)
 
 ### Current state metrics
 
