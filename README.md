@@ -109,10 +109,10 @@ The skill will:
 3. **Create** these files:
    - `.claude/settings.json` — permissions, hooks (if a formatter was detected), cost-optimization env vars
    - `CLAUDE.md` — slim project instructions (typically 20–40 lines), including a Key Config Files table and a Learnings section
-   - `.claude/context/` — optional shared domain context folder (brand, architecture, etc.) with placeholder files, if the user confirms domain knowledge to capture; Claude Design handoff artifacts belong in `.claude/context/design/`
+   - `context/` — optional shared domain context folder at the project root (brand, architecture, etc.) with placeholder files, if the user confirms domain knowledge to capture; registered in a `## Context files` table in CLAUDE.md for skill discovery
    - `AGENTS.md` — only if a multi-tool AI environment is detected or mentioned
    - `.gitignore` additions for personal Claude Code files
-   - `scripts/sync-config-table.sh` — keeps the Key Config Files table in CLAUDE.md in sync with the filesystem (including `DESIGN.md` and `.claude/context/` files)
+   - `scripts/sync-config-table.sh` — keeps the Key Config Files table in CLAUDE.md in sync with the filesystem (including `DESIGN.md` and `context/` files)
    - `.githooks/pre-commit` — runs the sync script before each commit
 4. **Wire** `DESIGN.md` into CLAUDE.md via `@`-import if the file exists at the project root, so Claude automatically consults the design system when building UI.
 5. **Activate** the git hooks directory: `git config core.hooksPath .githooks` (run automatically, once per clone).
@@ -213,10 +213,10 @@ If you add design artifacts after running `/cc-config-init`, a single `/cc-confi
 | `AGENTS.md`                    | `/cc-config-init`            | Vendor-neutral agent instructions (if multi-tool environment)                                                                             |
 | `DESIGN.md`                    | manual / design tool         | Design system spec — YAML tokens + Markdown rationale; wired into CLAUDE.md via `@`-import by `/cc-config-init` and `/cc-config-optimize` |
 | `.claude/settings.json`        | `/cc-config-init`            | Permissions, hooks, environment variables                                                                                                 |
-| `.claude/context/`             | `/cc-config-init` (optional) | Shared domain context folder — brand, architecture, etc.; skills reference files here via progressive disclosure                          |
+| `context/`                     | `/cc-config-init` (optional) | Shared domain context folder at project root — brand, architecture, etc.; registered in a `## Context files` table in CLAUDE.md           |
 | `.claude/context/design/`      | manual (user)                | Claude Design handoff artifacts: `PROMPT.md`, `design-notes.md`, `screenshots/`                                                           |
 | `.claude/learnings.md`         | auto (by skills)             | Project-specific observations auto-stored by skills at run end; also captures user-corrections instead of CLAUDE.md edits                 |
-| `scripts/sync-config-table.sh` | `/cc-config-init`            | Keeps the Key Config Files table in CLAUDE.md in sync — including `DESIGN.md` and `.claude/context/` files                                |
+| `scripts/sync-config-table.sh` | `/cc-config-init`            | Keeps the Key Config Files table in CLAUDE.md in sync — including `DESIGN.md` and `context/` files                                        |
 | `.githooks/pre-commit`         | `/cc-config-init`            | Runs the sync script before each commit; auto-stages CLAUDE.md when the table changes                                                     |
 | `.claude/skills/*`             | manual                       | Recurring workflows (audited by `/cc-config-optimize`)                                                                                    |
 | `.mcp.json`                    | manual                       | MCP server configuration (audited by `/cc-config-optimize`)                                                                               |
@@ -225,13 +225,13 @@ If you add design artifacts after running `/cc-config-init`, a single `/cc-confi
 
 - **Lean CLAUDE.md**: every line costs tokens on every message. Remove anything the linter enforces, Claude already knows, or that's only relevant sometimes (move to a skill).
 - **Progressive disclosure**: use `@`-imports for reference docs instead of inlining them. Reduces token waste by up to 59%.
-- **Domain context folder**: shared knowledge (brand voice, ICP, architecture decisions, API contracts) lives in `.claude/context/` — update once, every skill that references it reflects the change. Claude Design handoff artifacts belong in `.claude/context/design/`.
+- **Domain context folder**: shared knowledge (brand voice, ICP, architecture decisions, API contracts) lives in `context/` at the project root — registered in a `## Context files` table in CLAUDE.md so skills can discover and load files on demand. Claude Design handoff artifacts belong in `.claude/context/design/` (a separate, distinct location).
 - **Design system integration**: `DESIGN.md` at the project root is wired into CLAUDE.md via `@DESIGN.md **Read when:** building or editing any UI component`. Without this pointer Claude ignores the file for design decisions.
 - **`permissions.deny`**: block `.env`, secrets, and destructive commands. Replaces the deprecated `ignorePatterns`.
 - **Formatter hooks**: deterministic PostToolUse hooks beat instructions like "always run prettier" — the hook runs every time, the instruction might be ignored.
 - **Cost-optimization defaults**: auto-compact at 50% instead of the default 83%, capped thinking tokens, optional Haiku subagents.
 - **Verification loops**: test commands in CLAUDE.md so Claude can verify its own work (2–3× quality improvement).
-- **Key Config Files auto-sync**: a pre-commit hook keeps the config file table in CLAUDE.md current — new files get a `TODO` placeholder, deleted files are removed automatically. Covers `DESIGN.md` and `.claude/context/` subdirectories. Uses `.githooks/` (no Husky dependency). Requires one-time activation per clone: `git config core.hooksPath .githooks`. Every collaborator must run this command after cloning — without it, the hook is silently skipped.
+- **Key Config Files auto-sync**: a pre-commit hook keeps the config file table in CLAUDE.md current — new files get a `TODO` placeholder, deleted files are removed automatically. Covers `DESIGN.md` and `context/` subdirectories. Uses `.githooks/` (no Husky dependency). Requires one-time activation per clone: `git config core.hooksPath .githooks`. Every collaborator must run this command after cloning — without it, the hook is silently skipped.
 - **Learnings graduation**: at the end of each run, these skills automatically review and store project-specific observations to `.claude/learnings.md`, and recall stored learnings at the start of the next run — no manual action required. When the user corrects a mistake, Claude also appends a one-line correction instead of editing CLAUDE.md directly. Running `/cc-config-optimize` reviews the file: recurring patterns graduate into CLAUDE.md rules, skills, or hooks; one-off entries get deleted. Keeps CLAUDE.md stable between audits.
 - **Skill feedback loops**: these skills implement an Observe-Notice-Store-Recall (ONSR) loop — learnings are stored automatically at run end and recalled at run start without any manual action. A terminal feedback question still solicits explicit corrections at the point of delivery.
 - **Scheduling**: once recurring multi-step workflows emerge, the `/schedule` skill can automate them — run a chain of skills on a cron schedule and land the output in a review folder for human sign-off.

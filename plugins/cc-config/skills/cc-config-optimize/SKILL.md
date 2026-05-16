@@ -36,7 +36,8 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - `.claude/commands/*.md` (legacy format)
 - `.claude/agents/*.md`
 - `.claude/learnings.md`
-- `.claude/context/` (domain context files, including `.claude/context/design/` for Claude Design handoff artifacts)
+- `context/` (domain context files at project root — company profile, brand voice, architecture decisions, etc.)
+- `.claude/context/design/` (Claude Design handoff artifacts — PROMPT.md, design-notes.md, screenshots/)
 - `DESIGN.md` (root-level design system spec — YAML tokens + Markdown rationale; auto-read by Claude Code and other agents)
 - `.mcp.json` (project root)
 - `~/.claude/CLAUDE.md` (user level — read but don't modify without asking)
@@ -192,9 +193,9 @@ Run `/context` in a fresh session to get the current startup token count — if 
 - Is skill content concise? (target <50 lines per SKILL.md, split if longer)
 - If OpenSpec is used: are OpenSpec skills duplicated across multiple tool directories (`.claude/`, `.codex/`, `.gemini/`, `.github/`)? If so, flag this as a maintenance risk and suggest consolidation.
 - Do skills that produce domain-specific output correctly separate context by scope? Check for three types of violations:
-  - **Company-level knowledge inlined or duplicated per-skill**: brand voice, company profile, buyer personas, architecture decisions belong in `.claude/context/`. Consolidate and reference via progressive disclosure — update once, every skill reflects the change.
-  - **Format-level knowledge in `.claude/context/`**: a whitepaper structure guide or blog length rules belong inside the skill's own folder, not the shared context folder.
-  - **Campaign/feature briefings in `.claude/context/`**: initiative-specific briefings belong in the relevant project subfolder, not the company-scoped shared folder.
+  - **Company-level knowledge inlined or duplicated per-skill**: brand voice, company profile, buyer personas, architecture decisions belong in `context/` (project root). Consolidate and register in the `## Context files` table in CLAUDE.md — update once, every skill reflects the change.
+  - **Format-level knowledge in `context/`**: a whitepaper structure guide or blog length rules belong inside the skill's own folder, not the shared context folder.
+  - **Campaign/feature briefings in `context/`**: initiative-specific briefings belong in the relevant project subfolder, not the company-scoped shared folder.
 - Does each skill end with a feedback step? A skill that closes by asking "Did this output meet your expectations? If not, I'll log a correction to `.claude/learnings.md`" makes the learnings loop active rather than passive — corrections are solicited at the point of delivery, not just accumulated from future mishaps. Flag absent feedback steps as "nice to have."
 
 ### 2f: Multi-tool consistency check
@@ -259,11 +260,12 @@ Organize findings into three categories:
 - MCP servers that could be added or removed
 - Missing secret scanner (gitleaks) in pre-commit hook
 - Sync script format mismatch with project conventions (e.g., `.sh` in a Node-only repo)
-- Skills producing domain-specific output without referencing a shared `.claude/context/` folder (company-level knowledge duplicated or inlined per-skill)
-- Context scope violations: company-level knowledge buried in campaign subfolders, or format-level guidelines in `.claude/context/` instead of the relevant skill's folder
+- Skills producing domain-specific output without referencing the `context/` folder at the project root (company-level knowledge duplicated or inlined per-skill)
+- Context scope violations: company-level knowledge buried in campaign subfolders, or format-level guidelines in `context/` instead of the relevant skill's folder
+- `context/` files present but no `## Context files` table in CLAUDE.md — skills cannot discover context files without this table
 - Multi-level folder project without hierarchical CLAUDE.md files: if the repo has campaign, feature, or package subfolders where context meaningfully changes, each level should have its own CLAUDE.md that @-imports the relevant context for that scope — this lets Claude inherit all relevant context when started in any subfolder, without skills needing hard-coded paths to shared files
 - Skills missing a terminal feedback step that solicits corrections into the learnings loop
-- PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in `.claude/context/` or referenced via `@`-imports
+- PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in `context/` or referenced via `@`-imports
 - Missing `.claudeignore` startup token check: suggest the user run `/context` in a fresh session to measure actual startup overhead — if high, a missing or incomplete `.claudeignore` is a likely cause
 
 Present the findings to the user as a concise list, grouped by category. For each finding, state: what the issue is, why it matters, and what you'd change. Ask for approval before making changes.
@@ -353,26 +355,40 @@ When a project gains Husky or another hook manager after `/cc-config-init` was u
 - Don't remove functionality. If something serves a purpose, keep it — just optimize how it's expressed.
 - Don't make the config dependent on tools or servers the user hasn't installed.
 
-## Store learnings
-
-Before responding, review this run against the criteria below. For each entry that qualifies, append one line to `.claude/learnings.md` (create the file if it does not exist), tagged `[cc-config-optimize]`. Skip any entry that duplicates one already in the file or that was promoted or deleted by Step 2g in this run. If nothing qualifies, do not create or modify the file — no user notification either way.
-
-**Qualifies:**
-
-- Something about this project that differs from what this skill assumes on a generic project
-- A suggestion the user explicitly accepted or rejected that deviates from skill defaults
-- A constraint or fact discovered that would change how this skill behaves next time
-
-**Does not qualify:**
-
-- Standard skill behavior applied without deviation
-- Facts already present in CLAUDE.md, AGENTS.md, or other config files
-- Anything a reader could determine from the repo without this skill having run
-
-Entry format: `[cc-config-optimize] <concise fact about this project>`
-
 ## Feedback
 
-Before ending the session, ask: "Did this optimization meet your expectations? If anything needs adjusting, I'll log it to `.claude/learnings.md`."
+**Auto-store phase.** Before asking for feedback, review this run. For each qualifying observation, append one tagged line to `.claude/learnings.md` (create with standard header if missing). Skip entries promoted or deleted by Step 2g in this run:
+
+```text
+[cc-config:cc-config-optimize] <concise fact about this project> — <YYYY-MM-DD>
+```
+
+Qualifies: something about this project that differs from what this skill assumes on a generic project; a suggestion the user explicitly accepted or rejected that deviates from skill defaults; a constraint or fact discovered that would change how this skill behaves next time.
+
+Does not qualify: standard skill behavior applied without deviation; facts already present in CLAUDE.md, AGENTS.md, or other config files; anything a reader could determine from the repo without this skill having run; facts semantically equivalent to any existing `.claude/learnings.md` entry — when in doubt, skip.
+
+Check for the file before appending:
+
+```bash
+ls .claude/learnings.md 2>/dev/null && echo "exists" || echo "missing"
+```
+
+Standard header when creating the file:
+
+```markdown
+# Learnings
+
+Corrections and observations collected during configuration sessions.
+Entries are tagged by skill and dated.
+
+---
+```
+
+**Explicit feedback.** After the auto-store phase, ask:
+
+> "Did this optimization meet your expectations? If anything needs adjusting, share it here — or press Enter to finish."
+
+- If the user **provides a correction**: append it as a tagged entry using the same format and qualification criteria above. Confirm total entries written across both phases: "✓ N learning(s) saved to `.claude/learnings.md`."
+- If the user **confirms quality or skips**: if any entries were auto-stored, confirm "✓ N learning(s) auto-saved to `.claude/learnings.md`." Then exit. If nothing was stored, skip the confirmation and exit directly.
 
 > **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/cc-config-optimize` periodically to promote recurring patterns into the configuration.

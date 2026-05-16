@@ -26,7 +26,7 @@ If the file does not exist, proceed without mention.
 Before creating any files, understand what you're working with.
 
 1. Check if a git repo exists. If not, do NOT create one — just note it for the user.
-2. Look for existing config: `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.mcp.json`. If any exist, tell the user this skill is for fresh setups and suggest using `/cc-config-optimize` instead.
+2. Look for existing config: `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.mcp.json`, `context/`. If any exist, tell the user this skill is for fresh setups and suggest using `/cc-config-optimize` instead.
 3. Scan for clues about the project. Cover both code and content projects:
    - **Code**: `package.json`, `composer.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, `Makefile`, `Gemfile`, `pom.xml`, `build.gradle`, any `*.sln` or `*.csproj` files.
    - **Content / static sites / docs**: `hugo.toml`, `config.toml`, `config.yaml` (Hugo), `_config.yml` (Jekyll), `astro.config.*`, `.eleventy.js`, `mkdocs.yml`, `content/`, `articles/`, `posts/`, `_posts/`, dominant `.md` files, knowledge base or style guide files (`STYLE.md`, `style-guide.md`).
@@ -137,15 +137,15 @@ This overrides auto-compaction from the default ~83% (too late for good quality)
 
 Context knowledge lives at three scope levels. Explain this to the user before creating anything:
 
-**Level 1 — Company/project scope** (`.claude/context/`): Knowledge that applies to all work in this repo. Examples: company profile, brand voice, buyer personas, architecture decisions, API contracts. One file per distinct type of knowledge — name files after what they contain, not a fixed schema. Update one file, every skill that references it reflects the change.
+**Level 1 — Company/project scope** (`context/`): Knowledge that applies to all work in this repo. Examples: company profile, brand voice, buyer personas, architecture decisions, API contracts. One file per distinct type of knowledge — name files after what they contain, not a fixed schema. Update one file, every skill that references it reflects the change.
 
-**Level 2 — Format scope** (inside each skill's own folder): Knowledge specific to producing one output type — a whitepaper structure guide, blog length conventions, API endpoint style rules. Belongs with the skill that uses it, not in `.claude/context/`.
+**Level 2 — Format scope** (inside each skill's own folder): Knowledge specific to producing one output type — a whitepaper structure guide, blog length conventions, API endpoint style rules. Belongs with the skill that uses it, not in `context/`.
 
 **Level 3 — Campaign/feature scope** (regular project subfolders): Briefings, campaign assets, or feature specs for a specific initiative. Scoped to that subfolder — not shared globally.
 
 If the user confirmed company-level context in Step 1, ask: "What types of company-level context do you have?" Create one file per type they describe, with a `TODO` marker and a one-line description of what belongs there. Do not prescribe filenames — use names that reflect the actual content (`company-profile.md`, `brand-voice.md`, `buyer-personas.md`, `architecture-decisions.md`, or whatever fits the project).
 
-Also create `.claude/context/README.md` as a brief index explaining the convention:
+Also create `context/README.md` as a brief index explaining the convention:
 
 ```markdown
 # Context
@@ -157,16 +157,16 @@ Format-specific guidelines live inside each skill's own folder, not here.
 Campaign or feature briefings live in their respective project subfolders, not here.
 ```
 
-Wire each context file into CLAUDE.md's References section in Step 3 using progressive disclosure triggers.
+Register each context file in the `## Context files` table in CLAUDE.md (see Step 3).
 
 **Hierarchical CLAUDE.md for multi-level projects:** If the project has a nested folder structure — a marketing monorepo with campaign subfolders, a multi-package code repo, a website with distinct content sections — suggest CLAUDE.md files at each meaningful directory level:
 
-- Root `CLAUDE.md` → @-imports all company-wide context files from `.claude/context/`
+- Root `CLAUDE.md` → `## Context files` table listing all company-wide context files from `context/`
 - Each subfolder's `CLAUDE.md` → @-imports briefings or specs scoped to that folder
 
 When Claude Code starts in any subfolder, it reads CLAUDE.md files up the directory tree, so a session in `campaigns/product-xy/june-2026/` automatically gets company context (via root CLAUDE.md) plus campaign context (via the local CLAUDE.md). Skills invoked in that session inherit all of it without hard-coded absolute paths to shared files. Guide the user to create and maintain CLAUDE.md files at each level where the context meaningfully changes as the project structure grows.
 
-**Claude Design handoffs:** If the project uses Claude Design (Anthropic's visual design tool), direct the user to place Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/) in `.claude/context/design/` — not the project root. This keeps handoff snapshots versioned alongside the codebase without cluttering the root. `DESIGN.md` is different: it is a persistent, project-wide design system spec (YAML tokens + Markdown rationale) that lives at the project root and is auto-read by Claude Code and other agents. If `DESIGN.md` already exists or is being added, wire it into CLAUDE.md with `@DESIGN.md **Read when:** building or editing any UI component` — do not copy its contents into `.claude/context/`.
+**Claude Design handoffs:** If the project uses Claude Design (Anthropic's visual design tool), direct the user to place Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/) in `.claude/context/design/` — not the project root. This keeps handoff snapshots versioned alongside the codebase without cluttering the root. `DESIGN.md` is different: it is a persistent, project-wide design system spec (YAML tokens + Markdown rationale) that lives at the project root and is auto-read by Claude Code and other agents. If `DESIGN.md` already exists or is being added, wire it into CLAUDE.md with `@DESIGN.md **Read when:** building or editing any UI component` — do not copy its contents into `context/`.
 
 ## Step 3: Create CLAUDE.md
 
@@ -191,17 +191,26 @@ Structure:
 
 <Only if you can already identify a meaningful directory layout. Otherwise omit. For content projects, mention things like the article output directory or where the knowledge base lives.>
 
+## Context files
+
+<Add this section only if a context/ folder was created in Step 2. Skills discover
+and load these files on demand — they are not pre-loaded. One row per file, with a
+short summary drawn from the file's content (10–20 words):>
+
+| Category   | File                | Summary                 |
+| ---------- | ------------------- | ----------------------- |
+| <category> | `context/<name>.md` | TODO: brief description |
+
 ## References
 
-<Optional. For content projects with a shared knowledge base or style guide, and for any project where a .claude/context/ folder was set up in Step 2, use progressive disclosure rather than inlining content:
-```
+<Optional. Use progressive disclosure for large reference docs that are not domain
+context files: style guides, OpenSpec, architecture docs, DESIGN.md.
 
-@knowledge-base/index.md
 @style-guide.md **Read when:** writing or editing articles
 @DESIGN.md **Read when:** building or editing any UI component
 
-```
-Only include this section if such files exist.>
+Only include this section if such files exist. Do not put context/ files here —
+they belong in the Context files table above.>
 
 ## Conventions
 
@@ -357,12 +366,12 @@ if [[ -d "$ROOT/.claude/skills" ]]; then
   done < <(find "$ROOT/.claude/skills" -maxdepth 2 -name 'SKILL.md' -type f -print0 2>/dev/null | sort -z)
 fi
 
-# .claude/context/ reference files
-if [[ -d "$ROOT/.claude/context" ]]; then
+# context/ reference files
+if [[ -d "$ROOT/context" ]]; then
   while IFS= read -r -d '' f; do
     relpath="${f#$ROOT/}"
     config_files+=("$relpath")
-  done < <(find "$ROOT/.claude/context" -maxdepth 2 -type f -name '*.md' -print0 2>/dev/null | sort -z)
+  done < <(find "$ROOT/context" -maxdepth 2 -type f -name '*.md' -print0 2>/dev/null | sort -z)
 fi
 
 # .github/workflows/
@@ -493,7 +502,7 @@ This needs to be run once per clone. Note this in the summary (Step 7) so the us
 
 After creating all files, give the user a concise summary:
 
-1. List every file created with a one-line description — including any `.claude/context/` files if they were scaffolded.
+1. List every file created with a one-line description — including any `context/` files if they were scaffolded.
 2. Note any TODO placeholders that need filling in once the project takes shape.
 3. Mention what was intentionally left out and why (e.g., "No PostToolUse hook yet because no formatter was detected — add one once you pick a formatter.").
 4. Remind the user of five high-leverage next steps:
@@ -521,26 +530,40 @@ After creating all files, give the user a concise summary:
 - Don't over-engineer. A 20-line CLAUDE.md that's accurate beats an 80-line one full of guesses.
 - Don't include information you're not confident about. TODOs are better than wrong instructions.
 
-## Store learnings
-
-Before responding, review this run against the criteria below. For each entry that qualifies, append one line to `.claude/learnings.md` (create the file if it does not exist), tagged `[cc-config-init]`. Skip any entry that duplicates one already in the file. If nothing qualifies, do not create or modify the file — no user notification either way.
-
-**Qualifies:**
-
-- Something about this project that differs from what this skill assumes on a generic project
-- A suggestion the user explicitly accepted or rejected that deviates from skill defaults
-- A constraint or fact discovered that would change how this skill behaves next time
-
-**Does not qualify:**
-
-- Standard skill behavior applied without deviation
-- Facts already present in CLAUDE.md, AGENTS.md, or other config files
-- Anything a reader could determine from the repo without this skill having run
-
-Entry format: `[cc-config-init] <concise fact about this project>`
-
 ## Feedback
 
-Before ending the session, ask: "Did this configuration meet your expectations? If anything needs adjusting, I'll log it to `.claude/learnings.md`."
+**Auto-store phase.** Before asking for feedback, review this run. For each qualifying observation, append one tagged line to `.claude/learnings.md` (create with standard header if missing):
+
+```text
+[cc-config:cc-config-init] <concise fact about this project> — <YYYY-MM-DD>
+```
+
+Qualifies: something about this project that differs from what this skill assumes on a generic project; a suggestion the user explicitly accepted or rejected that deviates from skill defaults; a constraint or fact discovered that would change how this skill behaves next time.
+
+Does not qualify: standard skill behavior applied without deviation; facts already present in CLAUDE.md, AGENTS.md, or other config files; anything a reader could determine from the repo without this skill having run; facts semantically equivalent to any existing `.claude/learnings.md` entry — when in doubt, skip.
+
+Check for the file before appending:
+
+```bash
+ls .claude/learnings.md 2>/dev/null && echo "exists" || echo "missing"
+```
+
+Standard header when creating the file:
+
+```markdown
+# Learnings
+
+Corrections and observations collected during configuration sessions.
+Entries are tagged by skill and dated.
+
+---
+```
+
+**Explicit feedback.** After the auto-store phase, ask:
+
+> "Did this configuration meet your expectations? If anything needs adjusting, share it here — or press Enter to finish."
+
+- If the user **provides a correction**: append it as a tagged entry using the same format and qualification criteria above. Confirm total entries written across both phases: "✓ N learning(s) saved to `.claude/learnings.md`."
+- If the user **confirms quality or skips**: if any entries were auto-stored, confirm "✓ N learning(s) auto-saved to `.claude/learnings.md`." Then exit. If nothing was stored, skip the confirmation and exit directly.
 
 > **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/cc-config-optimize` periodically to promote recurring patterns into the configuration.
