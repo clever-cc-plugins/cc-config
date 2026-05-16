@@ -36,6 +36,7 @@ Before creating any files, understand what you're working with.
    - **Code**: `.eslintrc*`, `.prettierrc*`, `phpcs.xml*`, `rustfmt.toml`, `.editorconfig`, CI configs (`.github/workflows/`, `.gitlab-ci.yml`), pre-commit configs.
    - **Content**: `.vale.ini` / `vale.ini`, `.markdownlint.{json,yaml,yml}`, prettier configured for Markdown.
 5. Check for sensitive files: `.env`, `.env.*`, `secrets/`, any `*credentials*` or `*secret*` files.
+6. **GitHub Actions**: Check whether `.github/` exists or the git remote points to GitHub. Note the result — used in Step 4a.
 
 If the project directory is truly empty or has minimal content, ask the user:
 
@@ -248,6 +249,25 @@ Only create this if you have evidence that other AI coding tools are used (e.g.,
 AGENTS.md is the vendor-neutral standard read by Codex, Amp, Cursor, Copilot, and others. It demonstrably reduces runtime (~29%) and output token consumption (~17%).
 
 If created, keep it focused on universal concerns: setup commands, architecture boundaries, code style rules, testing conventions, and safety rules. Then reference it from CLAUDE.md via `@AGENTS.md`.
+
+## Step 4a: Add Claude Code GitHub Actions (if GitHub project)
+
+If Step 1 detected that this is a GitHub-hosted project and `.github/workflows/` does not already contain Claude Code action files, ask once:
+
+> "Would you like to add Claude Code GitHub Actions?
+>
+> - **`claude-code-review.yml`** — automatically reviews every pull request when it's opened or updated
+> - **`claude.yml`** — lets anyone trigger Claude by mentioning `@claude` in issues, PR comments, or PR reviews
+>
+> Both require a `CLAUDE_CODE_OAUTH_TOKEN` secret set in your GitHub repo settings. Add one, both, or skip."
+
+- If the user says **yes to both** (or just "yes"): read the companion files from `github-actions/claude-code-review.yml` and `github-actions/claude.yml` (in this skill's directory) and write them to `.github/workflows/`. Create the `.github/workflows/` directory if it does not exist.
+- If the user says **one only**: write only the requested file.
+- If the user says **skip** or the project is not on GitHub: skip without mention in the summary.
+
+After writing, do **not** add the workflow files to the Key Config Files table in Step 6 — the sync script already picks up `.github/workflows/` entries automatically.
+
+Note in Step 7 if any workflow files were added: the user must add `CLAUDE_CODE_OAUTH_TOKEN` as a repository secret in GitHub Settings → Secrets and variables → Actions before the workflows will run.
 
 ## Step 5: Update .gitignore and create .claudeignore
 
@@ -511,15 +531,18 @@ After creating all files, give the user a concise summary:
    - Run `/cc-config-optimize` after the project has some code to get a project-aware configuration pass.
    - Consider adding MCP servers to `.mcp.json` as needs arise (Context7 for docs, GitHub for PRs, etc.).
    - Once recurring multi-step workflows emerge, the `/schedule` skill can automate them — run a chain of skills on a cron schedule and land the output in a review folder for human sign-off before anything goes live.
-5. If the Key Config Files auto-sync was set up (Step 6), remind the user:
+5. If GitHub Actions workflow files were added (Step 4a), remind the user:
+   - Add `CLAUDE_CODE_OAUTH_TOKEN` as a repository secret in **GitHub Settings → Secrets and variables → Actions** before the workflows will run.
+   - The token is a Claude Code OAuth token from your Anthropic account — not an API key.
+6. If the Key Config Files auto-sync was set up (Step 6), remind the user:
    - The pre-commit hook requires a one-time activation per clone: `git config core.hooksPath .githooks`
    - This command was already run for the current clone, but collaborators or fresh clones need to run it too.
    - Suggest documenting it in the project README's setup instructions.
-6. Explain the Learnings mechanism:
+7. Explain the Learnings mechanism:
    - The skills automatically store project-specific observations to `.claude/learnings.md` at the end of each run and recall them at the start of the next — no manual action required.
    - When the user corrects a mistake, Claude also appends a correction to `.claude/learnings.md` instead of modifying CLAUDE.md directly.
    - Running `/cc-config-optimize` periodically reviews the file and proposes promoting recurring patterns into CLAUDE.md, skills, or hooks; one-off entries get deleted.
-7. Suggest committing the new config files to git.
+8. Suggest committing the new config files to git.
 
 ## What NOT to do
 
