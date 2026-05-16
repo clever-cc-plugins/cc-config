@@ -57,6 +57,15 @@ Open Claude Code in any project and run:
 
 That's it. Claude Code downloads the skills and makes `/cc-config-init` and `/cc-config-optimize` available immediately.
 
+### Or install via the cc-plugins umbrella
+
+To add all plugins from the [cc-plugins marketplace](https://github.com/MichaelvanLaar/cc-plugins) at once:
+
+```
+/plugin marketplace add MichaelvanLaar/cc-plugins
+/plugin install cc-config@cc-config
+```
+
 > **Note:** Auto-update for third-party marketplaces is off by default — see [Keeping skills current](#keeping-skills-current) to enable it.
 
 ### Keeping skills current
