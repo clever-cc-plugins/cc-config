@@ -66,7 +66,12 @@ Always include `permissions.deny` for sensitive files. Adapt the patterns to wha
   "permissions": {
     "deny": [
       "Read(./.env)",
-      "Read(./.env.*)",
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./.env.development)",
+      "Read(./.env.production)",
+      "Read(./.env.staging)",
+      "Read(./.env.test)",
       "Read(./secrets/**)",
       "Bash(curl:*)",
       "Bash(wget:*)",
@@ -76,10 +81,13 @@ Always include `permissions.deny` for sensitive files. Adapt the patterns to wha
 }
 ```
 
+**Do not use a broad `Read(./.env.*)` deny.** That glob also matches example and template files like `.env.example`, `.env.sample`, `.env.template`, `.env.dist`, and `example.env`. Those hold no secrets and exist to be read and documented — blocking them stalls development. Claude Code evaluates `deny` before `ask` before `allow`, and `Read()` rules have no negation, so a denied path can never be re-allowed: an `allow(./.env.example)` rule cannot override a matching deny. The deny list must therefore enumerate the real secret-bearing variants and leave example files unmatched. To get full `.env.*` coverage _with_ the example carve-out, pair this with the PreToolUse hook in the Hooks section below.
+
 Adjust deny rules based on what you found:
 
 - If there are credential files, add patterns for them.
 - If SSH keys or cloud credentials exist nearby, add those too.
+- If the project uses other secret-bearing env variants (e.g. `.env.ci`), add explicit `Read()` denies for them — but never for `*.example` / `*.sample` / `*.template` / `*.dist` files.
 
 For `permissions.allow`, add entries only if you can identify concrete, safe commands from the project (e.g., `Bash(npm run test:*)`, `Bash(cargo test:*)`). If the project is too empty to know, leave `allow` out — the user will add it interactively and can persist choices via `/permissions`.
 
@@ -118,7 +126,29 @@ Vale is a prose linter, not a formatter — don't wire it into PostToolUse. If y
 
 If no formatter is detected, skip the hook — don't guess. Note it in the summary for the user to add later.
 
-The `|| true` suffix is mandatory. Hooks must never crash Claude Code.
+For formatter hooks the `|| true` suffix is mandatory — a formatter must never crash Claude Code or block an edit. Security hooks are the exception (see below): they must fail closed, so they deliberately omit `|| true` and exit non-zero to block.
+
+**PreToolUse — secret-file guard (recommended).** This gives the broad `.env` / `.env.*` coverage the deny list deliberately avoids, while carving out example files. It checks the carve-out first, then blocks any `.env`/`.env.*` basename:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(jq -r '.tool_input.file_path // empty'); base=${file##*/}; case \"$base\" in *.example|*.sample|*.template|*.dist|example.env|sample.env) exit 0;; esac; case \"$base\" in .env|.env.*) echo \"Blocked: $base may contain secrets\" >&2; exit 2;; esac; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+`.env`, `.env.local`, and `.env.production.local` are blocked (exit 2); `.env.example`, `example.env`, `.env.sample`, and `.env.dist` stay readable. Do **not** append `|| true` here — a security hook must block on the secret path, not pass silently. The enumerated `permissions.deny` list above is the backstop if this hook ever fails open (e.g. `jq` not installed). The hook requires `jq`.
 
 ### Environment variables
 

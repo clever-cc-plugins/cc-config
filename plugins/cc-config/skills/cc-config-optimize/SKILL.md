@@ -117,7 +117,8 @@ Check for these anti-patterns:
 
 **Permissions:**
 
-- Are sensitive files protected by `permissions.deny`? At minimum: `.env`, `.env.*`, `secrets/**`.
+- Are sensitive files protected by `permissions.deny`? At minimum the real secret-bearing env files (`.env`, `.env.local`, `.env.*.local`, `.env.development`, `.env.production`, `.env.staging`, `.env.test`) and `secrets/**`.
+- **Flag a broad `Read(.env.*)` or `Read(./.env.*)` deny rule as a misconfiguration.** That glob also blocks example/template files (`.env.example`, `.env.sample`, `.env.template`, `.env.dist`, `example.env`), which hold no secrets and must stay readable for documentation. Because Claude Code evaluates `deny` before `allow` with no negation in `Read()` rules, a denied path cannot be re-allowed — an `allow(.env.example)` does not override it. Recommend migrating to the enumerated deny list above (leaving example files unmatched), and pairing it with the PreToolUse secret-file guard hook for full `.env.*` coverage with the example carve-out.
 - Is `permissions.deny` used instead of the deprecated `ignorePatterns`?
 - Are destructive commands blocked? (`rm -rf`, and consider `curl`/`wget` unless specifically needed)
 - Are safe, frequently-used commands in `permissions.allow`? (reduces approval fatigue)
@@ -125,8 +126,8 @@ Check for these anti-patterns:
 **Hooks (Claude Code):**
 
 - Is there a PostToolUse formatter hook? If a formatter exists in the project but no hook runs it, this is a high-impact gap. Valid formatter targets include code formatters (prettier, ruff, rustfmt, gofmt, php-cs-fixer) and Markdown formatters (prettier on `.md`, `markdownlint --fix`) — don't skip the audit just because the project produces content rather than code.
-- Is there a PreToolUse hook protecting sensitive files? (defense in depth beyond permissions.deny)
-- Do all hooks use `|| true` for graceful degradation?
+- Is there a PreToolUse hook protecting sensitive files? (defense in depth beyond `permissions.deny`) A `Read|Edit` guard that blocks `.env`/`.env.*` basenames while carving out `*.example`/`*.sample`/`*.template`/`*.dist`/`example.env` gives broad coverage that the enumerated deny list cannot, since deny rules must leave example files unmatched. See the secret-file guard hook in `/cc-config-init`.
+- Do all hooks use `|| true` for graceful degradation? **Exception: security hooks must fail closed.** A secret-file guard must exit non-zero (block) on the bad path and must not be softened with `|| true`, or it will pass silently when its dependency (e.g. `jq`) is missing. Only formatter/lint hooks should carry `|| true`.
 - Are hooks doing "block at submit" rather than "block at write"? (fewer interrupts, smoother flow)
 
 **Git hooks and hook-manager drift:**
