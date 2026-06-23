@@ -36,6 +36,7 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - `.claude/commands/*.md` (legacy format)
 - `.claude/agents/*.md`
 - `.claude/learnings.md`
+- `.headroom/` (machine-local Headroom data — check for presence: `ls .headroom 2>/dev/null && echo headroom-present || echo headroom-absent`)
 - `context/` (domain context files at project root — company profile, brand voice, architecture decisions, etc.)
 - `context/design/` (Claude Design handoff artifacts — PROMPT.md, design-notes.md, screenshots/)
 - `DESIGN.md` (root-level design system spec — YAML tokens + Markdown rationale; auto-read by Claude Code and other agents)
@@ -229,6 +230,35 @@ When the user corrects a mistake or points out a recurring issue, append a one-l
 summary to .claude/learnings.md. Don't modify CLAUDE.md directly.
 ```
 
+### 2h: Headroom audit
+
+Headroom is an optional in-flight compression layer that reduces context window usage by compressing tool outputs, Bash results, logs, and code before they reach the model — a different optimization level from env vars and `.claudeignore`, which operate at startup and configuration time.
+
+Run:
+
+```bash
+which headroom 2>/dev/null && headroom --version 2>/dev/null | head -1 || echo "headroom-not-installed"
+python3 -c "import sys; print('python-ok' if sys.version_info >= (3, 10) else 'python-too-old')" 2>/dev/null || echo "python-unavailable"
+ls .headroom 2>/dev/null && echo "headroom-dir-present" || echo "headroom-dir-absent"
+```
+
+**If Headroom is installed:**
+
+1. **`.gitignore` check**: Headroom stores machine-local data in `.headroom/` — session caches and `.headroom/CLAUDE.local.md` (machine-local learnings). These must not be committed: they are per-machine, ephemeral, and will conflict across clones. If `.headroom/` is not in `.gitignore`, flag as "should fix."
+2. **Integration mode**: Detect which mode is in use:
+   - *MCP mode*: look for a Headroom entry in `.mcp.json`. Verify it is still in the active server list; stale entries add tool-count overhead for nothing.
+   - *Proxy/wrap mode*: `headroom wrap claude` or `headroom proxy --port 8787 --code-aware` must be run before each session. If this is not documented in CLAUDE.md (or a project README), note it — teammates will not know to start it.
+3. **Code-aware flag**: For code compression to activate, the proxy must be started with `--code-aware`. Without it, code files produce `tokens_saved: 0`. Flag as a note if the user is on proxy mode and this flag is not documented.
+4. **Learnings coexistence**: Headroom's `.headroom/CLAUDE.local.md` and cc-config's `.claude/learnings.md` serve different purposes and should both be kept. Headroom's file captures machine-local session patterns; cc-config's file captures explicit user corrections and is team-shared (committed to git, feeds the `cc-config-optimize` promotion cycle). Do not consolidate them.
+
+**If Headroom is not installed and Python 3.10+ is available:**
+
+Add to "Nice to have." Do **not** add if Python is unavailable or below 3.10, or if the project is known to run exclusively in sandboxed/remote environments (CI pipelines, Claude Code on the web) — Headroom requires a persistent local process and is incompatible with those contexts.
+
+**If Python is unavailable or below 3.10:**
+
+Skip. Do not mention Headroom.
+
 ## Step 3: Generate findings report
 
 Organize findings into three categories:
@@ -251,6 +281,7 @@ Organize findings into three categories:
 - Learnings entries that should be promoted to CLAUDE.md or a skill
 - Orphaned `scripts/sync-config-table.*` with no active hook wiring
 - `DESIGN.md` present at project root but not referenced via `@DESIGN.md` in CLAUDE.md (Claude won't apply the design system without the pointer)
+- Headroom installed but `.headroom/` not in `.gitignore`: machine-local Headroom files (session caches, `.headroom/CLAUDE.local.md`) must not be committed — they are per-machine and will break other clones
 
 ### Nice to have (polish)
 
@@ -268,6 +299,7 @@ Organize findings into three categories:
 - Skills missing a terminal feedback step that solicits corrections into the learnings loop
 - PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in `context/` or referenced via `@`-imports
 - Missing `.claudeignore` startup token check: suggest the user run `/context` in a fresh session to measure actual startup overhead — if high, a missing or incomplete `.claudeignore` is a likely cause
+- Headroom not installed but Python 3.10+ is available (and the project is not exclusively run in sandboxed/remote environments): Headroom compresses tool outputs, Bash results, and code in-flight before they reach the model — a different optimization level from env vars and `.claudeignore`. Real-workload savings: 73–92% on code-search and log-heavy tasks. Output tokens cost 5× more than input on Opus-class models, so in-flight compression compounds quickly. Install: `pip install "headroom-ai[all]"`. Start with `headroom wrap claude` (quickest path) or `headroom proxy --port 8787 --code-aware` (proxy mode; `--code-aware` is required for code compression). Run `headroom perf` after a few sessions to measure savings. Important constraint: requires a persistent local process — not compatible with remote/sandboxed sessions (Claude Code on the web, CI pipelines). If the project is used in both local and remote contexts, Headroom benefits only the local sessions.
 
 Present the findings to the user as a concise list, grouped by category. For each finding, state: what the issue is, why it matters, and what you'd change. Ask for approval before making changes.
 
@@ -289,6 +321,17 @@ When resolving hook-manager conflicts:
 - If migrating to Husky: append the sync-script call to `.husky/pre-commit` (create it if missing), delete `.githooks/pre-commit`, remove the empty `.githooks/` directory, and suggest the user runs `git config --unset core.hooksPath` on each clone.
 - If migrating to Lefthook or pre-commit: add the appropriate entry to the respective config file instead.
 - Never delete `scripts/sync-config-table.*` itself — the script is still useful, only the wiring changes.
+
+When resolving the Headroom gitignore gap:
+
+Append `.headroom/` to `.gitignore`. Place it under the existing Claude Code personal-files block if one exists, or at the end of the file with a short comment:
+
+```
+# Headroom — machine-local session cache and learnings
+.headroom/
+```
+
+Do not create `.headroom/` or any files inside it — Headroom manages that directory itself.
 
 Preserve things that work well. Don't refactor for the sake of refactoring. If an existing config is well-structured and correct, say so and move on.
 
