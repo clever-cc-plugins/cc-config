@@ -4,16 +4,21 @@ Reusable Claude Code skills for configuration management, distributed as a Claud
 
 ## Key Config Files
 
-| File                                                   | Purpose                                                               |
-| ------------------------------------------------------ | --------------------------------------------------------------------- |
-| `CLAUDE.md`                                            | Project instructions, loaded every message                            |
-| `.claude/settings.json`                                | Permissions, hooks, environment variables                             |
-| `plugins/cc-config/.claude-plugin/plugin.json`         | Plugin manifest for the cc-config plugin                              |
-| `plugins/cc-config/skills/cc-config-init/SKILL.md`     | Skill: Bootstrap a best-practice Claude Code config for a new project |
-| `plugins/cc-config/skills/cc-config-optimize/SKILL.md` | Skill: Audit and optimize an existing Claude Code configuration       |
-| `.gitignore`                                           | Git ignore patterns                                                   |
-| `.claudeignore`                                        | Paths excluded from Claude Code indexing                              |
-| `.githooks/pre-commit`                                 | Pre-commit secret scanning via gitleaks                               |
+| File | Purpose |
+|------|---------|
+| `.claude/format-markdown.sh` | PostToolUse hook: formats Markdown files with prettier after edits     |
+| `.claude/guard-secret-files.sh` | PreToolUse hook: blocks reads/edits/writes of secret .env files        |
+| `.claudeignore` | Paths excluded from Claude Code indexing                               |
+| `CLAUDE.md` | Project instructions, loaded every message                             |
+| `.claude/settings.json` | Permissions, hooks, environment variables                              |
+| `.githooks/pre-commit` | Secret scanning (gitleaks) + CLAUDE.md table sync                      |
+| `.github/workflows/claude-code-review.yml` | Automatic PR review via Claude Code                                    |
+| `.github/workflows/claude.yml` | Trigger Claude via @claude mentions in issues/PRs                      |
+| `.gitignore` | Git ignore patterns                                                    |
+| `plugins/cc-config/.claude-plugin/plugin.json` | Plugin manifest for the cc-config plugin                               |
+| `plugins/cc-config/skills/cc-config-init/SKILL.md` | Skill: Bootstrap a best-practice Claude Code config for a new project  |
+| `plugins/cc-config/skills/cc-config-optimize/SKILL.md` | Skill: Audit and optimize an existing Claude Code configuration        |
+| `scripts/sync-config-table.sh` | Keeps Key Config Files table in sync on each commit                    |
 
 ## Setup
 

@@ -7,3 +7,6 @@ else
   echo "Warning: gitleaks not installed — secret scanning skipped."
   echo "Install: brew install gitleaks (macOS) or https://github.com/gitleaks/gitleaks"
 fi
+
+# Keep CLAUDE.md config file table in sync
+bash scripts/sync-config-table.sh
