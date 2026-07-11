@@ -51,7 +51,7 @@ These skills take a different approach:
 Open Claude Code in any project and run:
 
 ```
-/plugin marketplace add MichaelvanLaar/cc-plugins
+/plugin marketplace add clever-cc-plugins/marketplace
 /plugin install cc-config@cc-config
 ```
 
@@ -65,7 +65,7 @@ The plugin system checks for updates automatically on startup. For third-party m
 
 1. Run `/plugin` in Claude Code
 2. Go to the **Marketplaces** tab
-3. Turn on auto-update for `MichaelvanLaar/cc-plugins`
+3. Turn on auto-update for `clever-cc-plugins/marketplace`
 
 Once enabled, Claude Code updates the skills on startup whenever a new version is available.
 
@@ -76,7 +76,7 @@ After running `/cc-config-init`, additional files are created in your project (s
 To remove the plugin and the marketplace in one step:
 
 ```
-/plugin marketplace remove cc-plugins
+/plugin marketplace remove clever-cc-plugins
 ```
 
 Removing the marketplace automatically uninstalls any plugins installed from it. To remove only the plugin while keeping the marketplace:

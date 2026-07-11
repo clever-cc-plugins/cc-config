@@ -17,10 +17,10 @@ Reusable Claude Code skills for configuration management, distributed as a Claud
 
 ## Setup
 
-To use the cc-config skills locally in this repo (dogfooding), install from the cc-plugins marketplace:
+To use the cc-config skills locally in this repo (dogfooding), install from the clever-cc-plugins marketplace:
 
 ```
-/plugin marketplace add MichaelvanLaar/cc-plugins
+/plugin marketplace add clever-cc-plugins/marketplace
 /plugin install cc-config@cc-config
 ```
 

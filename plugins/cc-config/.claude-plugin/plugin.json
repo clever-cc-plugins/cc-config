@@ -4,7 +4,7 @@
   "author": {
     "name": "Michael van Laar"
   },
-  "homepage": "https://github.com/MichaelvanLaar/cc-config",
-  "repository": "https://github.com/MichaelvanLaar/cc-config",
+  "homepage": "https://github.com/clever-cc-plugins/cc-config",
+  "repository": "https://github.com/clever-cc-plugins/cc-config",
   "license": "MIT"
 }
