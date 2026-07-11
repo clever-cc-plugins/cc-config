@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/clever-cc-plugins/.github/main/assets/logo-dark.svg" />
+    <img src="https://raw.githubusercontent.com/clever-cc-plugins/.github/main/assets/logo.svg" width="220" alt="clever [cc] plugins" />
+  </picture>
+</p>
+
 # cc-config
 
 Two Claude Code skills for setting up and maintaining a best-practice Claude Code configuration, distributed as a Claude Code plugin.
@@ -10,9 +17,17 @@ Both skills work for software projects **and** content projects (static sites, a
 
 Both skills are grounded in the consolidated recommendations from the [official Claude Code docs](https://code.claude.com/docs/en/best-practices), [Anthropic's engineering blog](https://www.anthropic.com/engineering), community configurations, and academic research on agent instruction design.
 
+## At a glance
+
+| Skill                 | Use it when                            | What it does                                                                                                                                            |
+| --------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/cc-config-init`     | Starting a new or unconfigured project | Creates a lean CLAUDE.md, hardened permissions, formatter hooks, and cost-optimization defaults                                                         |
+| `/cc-config-optimize` | Auditing an existing setup             | Inventories every config file, flags anti-patterns, and reports findings in three tiers — must fix, should fix, nice to have — before touching anything |
+
 ## Table of Contents
 
 - [cc-config](#cc-config)
+  - [At a glance](#at-a-glance)
   - [Table of Contents](#table-of-contents)
   - [What problem do these skills solve?](#what-problem-do-these-skills-solve)
   - [Installation](#installation)
@@ -52,7 +67,7 @@ Open Claude Code in any project and run:
 
 ```
 /plugin marketplace add clever-cc-plugins/marketplace
-/plugin install cc-config@cc-config
+/plugin install cc-config@clever-cc-plugins
 ```
 
 That's it. Claude Code downloads the skills and makes `/cc-config-init` and `/cc-config-optimize` available immediately.
@@ -82,7 +97,7 @@ To remove the plugin and the marketplace in one step:
 Removing the marketplace automatically uninstalls any plugins installed from it. To remove only the plugin while keeping the marketplace:
 
 ```
-/plugin uninstall cc-config@cc-config
+/plugin uninstall cc-config@clever-cc-plugins
 ```
 
 ## Usage
@@ -252,3 +267,9 @@ Issues and pull requests are welcome. If you've found a best practice that isn't
 ## License
 
 [MIT](LICENSE)
+
+---
+
+<p align="center">
+  Part of the <a href="https://github.com/clever-cc-plugins">clever-cc-plugins</a> family · <a href="https://github.com/clever-cc-plugins/marketplace">marketplace</a> · <a href="https://github.com/clever-cc-plugins/cc-content">cc-content</a> · <a href="https://github.com/clever-cc-plugins/cc-chime">cc-chime</a>
+</p>
