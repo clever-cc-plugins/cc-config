@@ -37,8 +37,8 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - `.claude/agents/*.md`
 - `.claude/learnings.md`
 - `.headroom/` (machine-local Headroom data — check for presence: `ls .headroom 2>/dev/null && echo headroom-present || echo headroom-absent`)
-- `context/` (domain context files at project root — company profile, brand voice, architecture decisions, etc.)
-- `context/design/` (Claude Design handoff artifacts — PROMPT.md, design-notes.md, screenshots/)
+- `context/` (domain context files at project root by convention — company profile, brand voice, architecture decisions, etc.; if CLAUDE.md's `## Context files` table registers a different location, use that instead)
+- `context/design/` (Claude Design handoff artifacts — PROMPT.md, design-notes.md, screenshots/ — under the registered context location)
 - `DESIGN.md` (root-level design system spec — YAML tokens + Markdown rationale; auto-read by Claude Code and other agents)
 - `.mcp.json` (project root)
 - `~/.claude/CLAUDE.md` (user level — read but don't modify without asking)
@@ -56,7 +56,7 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 - Directory structure and apparent architecture patterns
 - Hook managers and their hook files (`.husky/`, `lefthook.yml`, `.pre-commit-config.yaml`)
 - Project-local git hooks directory (`.githooks/`) and sync scripts (`scripts/sync-config-table.{sh,js}`)
-- Design system artifacts: `DESIGN.md` at the project root (persistent design system spec); `context/design/` for Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/)
+- Design system artifacts: `DESIGN.md` at the project root (persistent design system spec); `context/design/` (or the registered context location's `design/` subfolder) for Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/)
 
 ### Current state metrics
 
@@ -195,9 +195,9 @@ Run `/context` in a fresh session to get the current startup token count — if 
 - Is skill content concise? (target <50 lines per SKILL.md, split if longer)
 - If OpenSpec is used: are OpenSpec skills duplicated across multiple tool directories (`.claude/`, `.codex/`, `.gemini/`, `.github/`)? If so, flag this as a maintenance risk and suggest consolidation.
 - Do skills that produce domain-specific output correctly separate context by scope? Check for three types of violations:
-  - **Company-level knowledge inlined or duplicated per-skill**: brand voice, company profile, buyer personas, architecture decisions belong in `context/` (project root). Consolidate and register in the `## Context files` table in CLAUDE.md — update once, every skill reflects the change.
-  - **Format-level knowledge in `context/`**: a whitepaper structure guide or blog length rules belong inside the skill's own folder, not the shared context folder.
-  - **Campaign/feature briefings in `context/`**: initiative-specific briefings belong in the relevant project subfolder, not the company-scoped shared folder.
+  - **Company-level knowledge inlined or duplicated per-skill**: brand voice, company profile, buyer personas, architecture decisions belong in the registered context location (`context/` by convention, project root). Consolidate and register in the `## Context files` table in CLAUDE.md — update once, every skill reflects the change.
+  - **Format-level knowledge in the shared context location**: a whitepaper structure guide or blog length rules belong inside the skill's own folder, not the shared context folder.
+  - **Campaign/feature briefings in the shared context location**: initiative-specific briefings belong in the relevant project subfolder, not the company-scoped shared folder.
 - Does each skill end with a feedback step? A skill that closes by asking "Did this output meet your expectations? If not, I'll log a correction to `.claude/learnings.md`" makes the learnings loop active rather than passive — corrections are solicited at the point of delivery, not just accumulated from future mishaps. Flag absent feedback steps as "nice to have."
 
 ### 2f: Multi-tool consistency check
@@ -246,8 +246,8 @@ ls .headroom 2>/dev/null && echo "headroom-dir-present" || echo "headroom-dir-ab
 
 1. **`.gitignore` check**: Headroom stores machine-local data in `.headroom/` — session caches and `.headroom/CLAUDE.local.md` (machine-local learnings). These must not be committed: they are per-machine, ephemeral, and will conflict across clones. If `.headroom/` is not in `.gitignore`, flag as "should fix."
 2. **Integration mode**: Detect which mode is in use:
-   - *MCP mode*: look for a Headroom entry in `.mcp.json`. Verify it is still in the active server list; stale entries add tool-count overhead for nothing.
-   - *Proxy/wrap mode*: `headroom wrap claude` or `headroom proxy --port 8787 --code-aware` must be run before each session. If this is not documented in CLAUDE.md (or a project README), note it — teammates will not know to start it.
+   - _MCP mode_: look for a Headroom entry in `.mcp.json`. Verify it is still in the active server list; stale entries add tool-count overhead for nothing.
+   - _Proxy/wrap mode_: `headroom wrap claude` or `headroom proxy --port 8787 --code-aware` must be run before each session. If this is not documented in CLAUDE.md (or a project README), note it — teammates will not know to start it.
 3. **Code-aware flag**: For code compression to activate, the proxy must be started with `--code-aware`. Without it, code files produce `tokens_saved: 0`. Flag as a note if the user is on proxy mode and this flag is not documented.
 4. **Learnings coexistence**: Headroom's `.headroom/CLAUDE.local.md` and cc-config's `.claude/learnings.md` serve different purposes and should both be kept. Headroom's file captures machine-local session patterns; cc-config's file captures explicit user corrections and is team-shared (committed to git, feeds the `cc-config-optimize` promotion cycle). Do not consolidate them.
 
@@ -292,12 +292,12 @@ Organize findings into three categories:
 - MCP servers that could be added or removed
 - Missing secret scanner (gitleaks) in pre-commit hook
 - Sync script format mismatch with project conventions (e.g., `.sh` in a Node-only repo)
-- Skills producing domain-specific output without referencing the `context/` folder at the project root (company-level knowledge duplicated or inlined per-skill)
-- Context scope violations: company-level knowledge buried in campaign subfolders, or format-level guidelines in `context/` instead of the relevant skill's folder
-- `context/` files present but no `## Context files` table in CLAUDE.md — skills cannot discover context files without this table
+- Skills producing domain-specific output without referencing the registered context location (`context/` by convention, project root) — company-level knowledge duplicated or inlined per-skill
+- Context scope violations: company-level knowledge buried in campaign subfolders, or format-level guidelines in the shared context location instead of the relevant skill's folder
+- Context files present but no `## Context files` table in CLAUDE.md — skills cannot discover context files without this table
 - Multi-level folder project without hierarchical CLAUDE.md files: if the repo has campaign, feature, or package subfolders where context meaningfully changes, each level should have its own CLAUDE.md that @-imports the relevant context for that scope — this lets Claude inherit all relevant context when started in any subfolder, without skills needing hard-coded paths to shared files
 - Skills missing a terminal feedback step that solicits corrections into the learnings loop
-- PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in `context/` or referenced via `@`-imports
+- PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in the registered context location or referenced via `@`-imports
 - Missing `.claudeignore` startup token check: suggest the user run `/context` in a fresh session to measure actual startup overhead — if high, a missing or incomplete `.claudeignore` is a likely cause
 - Headroom not installed but Python 3.10+ is available (and the project is not exclusively run in sandboxed/remote environments): Headroom compresses tool outputs, Bash results, and code in-flight before they reach the model — a different optimization level from env vars and `.claudeignore`. Real-workload savings: 73–92% on code-search and log-heavy tasks. Output tokens cost 5× more than input on Opus-class models, so in-flight compression compounds quickly. Install: `pip install "headroom-ai[all]"`. Start with `headroom wrap claude` (quickest path) or `headroom proxy --port 8787 --code-aware` (proxy mode; `--code-aware` is required for code compression). Run `headroom perf` after a few sessions to measure savings. Important constraint: requires a persistent local process — not compatible with remote/sandboxed sessions (Claude Code on the web, CI pipelines). If the project is used in both local and remote contexts, Headroom benefits only the local sessions.
 
