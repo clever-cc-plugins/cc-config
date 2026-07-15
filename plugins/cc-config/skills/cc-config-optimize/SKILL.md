@@ -105,6 +105,7 @@ Check for these anti-patterns:
 - If AGENTS.md exists, does CLAUDE.md import it via `@AGENTS.md` instead of duplicating content?
 - If OpenSpec is used, does CLAUDE.md reference `@openspec/project.md` for project context?
 - If `DESIGN.md` exists at the project root, does CLAUDE.md reference it via `@DESIGN.md **Read when:** building or editing any UI component`? Without this pointer Claude won't consult the design system when making UI decisions.
+- If the registered context location (`context/` by convention, or wherever CLAUDE.md's `## Context files` table points) contains files, does CLAUDE.md have a `## Context files` table registering them? Without this table, skills can't discover which context files exist or judge their relevance — they only find files they're explicitly pointed to. Note: this is a plain Markdown table, not an `@`-import — the table itself loads every message, but each underlying file loads only when a skill judges it relevant to the current task from its Summary.
 - Are there too many `IMPORTANT:` or `YOU MUST` markers? (if everything is marked important, nothing is)
 
 ### 2b: AGENTS.md audit
@@ -198,6 +199,11 @@ Run `/context` in a fresh session to get the current startup token count — if 
   - **Company-level knowledge inlined or duplicated per-skill**: brand voice, company profile, buyer personas, architecture decisions belong in the registered context location (`context/` by convention, project root). Consolidate and register in the `## Context files` table in CLAUDE.md — update once, every skill reflects the change.
   - **Format-level knowledge in the shared context location**: a whitepaper structure guide or blog length rules belong inside the skill's own folder, not the shared context folder.
   - **Campaign/feature briefings in the shared context location**: initiative-specific briefings belong in the relevant project subfolder, not the company-scoped shared folder.
+- If a `## Context files` table exists, validate its rows:
+  - **Malformed rows**: don't follow `Label | File | Summary` (missing or extra cells).
+  - **Orphaned paths**: the `File` value doesn't resolve to an existing file. Check with `test -f`, resolving the path relative to the CLAUDE.md file that contains the table — not the repository root (paths follow the same resolution rule as `@`-imports, so a nested CLAUDE.md's table is relative to its own directory).
+  - **Duplicates**: two rows share the same Label or the same File path.
+  - **Vague summaries** (soft check — human judgment): a summary too generic to act as a relevance signal, e.g. "Writing style guidelines for the company" instead of "Formal German, em-dash preferred, no exclamation marks — all corporate copy." Flag as a suggestion, not a hard rule.
 - Does each skill end with a feedback step? A skill that closes by asking "Did this output meet your expectations? If not, I'll log a correction to `.claude/learnings.md`" makes the learnings loop active rather than passive — corrections are solicited at the point of delivery, not just accumulated from future mishaps. Flag absent feedback steps as "nice to have."
 
 ### 2f: Multi-tool consistency check
@@ -281,6 +287,8 @@ Organize findings into three categories:
 - Learnings entries that should be promoted to CLAUDE.md or a skill
 - Orphaned `scripts/sync-config-table.*` with no active hook wiring
 - `DESIGN.md` present at project root but not referenced via `@DESIGN.md` in CLAUDE.md (Claude won't apply the design system without the pointer)
+- Context files present in the registered context location but no `## Context files` table in CLAUDE.md — skills cannot discover context files without this table
+- `## Context files` table has malformed rows (not `Label | File | Summary`), duplicate Label/File values, or File paths that don't resolve to an existing file
 - Headroom installed but `.headroom/` not in `.gitignore`: machine-local Headroom files (session caches, `.headroom/CLAUDE.local.md`) must not be committed — they are per-machine and will break other clones
 
 ### Nice to have (polish)
@@ -294,8 +302,8 @@ Organize findings into three categories:
 - Sync script format mismatch with project conventions (e.g., `.sh` in a Node-only repo)
 - Skills producing domain-specific output without referencing the registered context location (`context/` by convention, project root) — company-level knowledge duplicated or inlined per-skill
 - Context scope violations: company-level knowledge buried in campaign subfolders, or format-level guidelines in the shared context location instead of the relevant skill's folder
-- Context files present but no `## Context files` table in CLAUDE.md — skills cannot discover context files without this table
-- Multi-level folder project without hierarchical CLAUDE.md files: if the repo has campaign, feature, or package subfolders where context meaningfully changes, each level should have its own CLAUDE.md that @-imports the relevant context for that scope — this lets Claude inherit all relevant context when started in any subfolder, without skills needing hard-coded paths to shared files
+- `## Context files` table summaries too vague to act as a relevance signal for skills (soft check — human judgment, e.g. "Writing style guidelines" instead of naming the specific tone, audience, or rules)
+- Multi-level folder project without hierarchical CLAUDE.md files: if the repo has campaign, feature, or package subfolders where context meaningfully changes, each level should have its own CLAUDE.md that @-imports the relevant context for that scope — this lets Claude inherit all relevant context when started in any subfolder, without skills needing hard-coded paths to shared files. Any `## Context files` table in a nested CLAUDE.md follows the same path convention as the root one: `File` values are relative to that CLAUDE.md's own location, not the repository root.
 - Skills missing a terminal feedback step that solicits corrections into the learnings loop
 - PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in the registered context location or referenced via `@`-imports
 - Missing `.claudeignore` startup token check: suggest the user run `/context` in a fresh session to measure actual startup overhead — if high, a missing or incomplete `.claudeignore` is a likely cause
