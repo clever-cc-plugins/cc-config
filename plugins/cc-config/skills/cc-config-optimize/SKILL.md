@@ -159,10 +159,11 @@ This catches secrets committed by both Claude Code and the user. Unlike `permiss
 
 **Environment variables:**
 
-- Is `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` set? Recommended: `50`. Default 83% is too late.
+- Is `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` set? Recommended: `50`. Default 83% is too late. **Caveat:** 50% is calibrated to a reduced `MAX_THINKING_TOKENS` (e.g. `10000`). If the project raises the thinking budget back toward default (31999) — or sets `alwaysThinkingEnabled: true` with a high `effortLevel` — a 50% override will trigger autocompaction far too early and shed context mid-task. When recommending `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: 50`, check it's paired with a correspondingly low `MAX_THINKING_TOKENS`; if the project uses a high thinking budget instead, recommend a higher override percentage.
 - Is `MAX_THINKING_TOKENS` set? Consider `10000` (down from default 31999) for ~70% thinking cost savings.
 - Is `CLAUDE_CODE_MAX_OUTPUT_TOKENS` set? Consider `16000` to prevent unnecessarily verbose responses.
 - Is `CLAUDE_CODE_SUBAGENT_MODEL` set? `haiku` gives ~80% cost savings for exploration subagents.
+- Are `alwaysThinkingEnabled` and `effortLevel` (in `settings.json`, not `env`) consistent with the autocompact override? These control thinking budget independently of `MAX_THINKING_TOKENS`. `alwaysThinkingEnabled: true` at `effortLevel: high` pushes token usage per turn up substantially — flag it alongside a low `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` as a mismatch.
 
 **`.claudeignore`:**
 
