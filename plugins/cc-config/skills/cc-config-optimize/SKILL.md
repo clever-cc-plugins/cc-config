@@ -11,7 +11,7 @@ You are auditing and improving an existing Claude Code setup. The project has co
 
 ## Philosophy
 
-Configuration is a multiplier, but only if it's lean. A 60-line CLAUDE.md with progressive disclosure outperforms a 300-line monolith. Three well-chosen MCP servers beat twenty poorly managed ones. Proactive compaction at 50% beats reactive auto-compact at 83%. A PostToolUse hook that runs the formatter on every edit eliminates an entire class of manual intervention forever.
+Configuration is a multiplier, but only if it's lean. A 60-line CLAUDE.md with progressive disclosure outperforms a 300-line monolith. Three well-chosen MCP servers beat twenty poorly managed ones. A PostToolUse hook that runs the formatter on every edit eliminates an entire class of manual intervention forever.
 
 The guiding question for every instruction in CLAUDE.md: "Would removing this line cause Claude to make a concrete mistake?" If no — remove it.
 
@@ -159,11 +159,11 @@ This catches secrets committed by both Claude Code and the user. Unlike `permiss
 
 **Environment variables:**
 
-- Is `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` set? Recommended: `50`. Default 83% is too late. **Caveat:** 50% is calibrated to a reduced `MAX_THINKING_TOKENS` (e.g. `10000`). If the project raises the thinking budget back toward default (31999) — or sets `alwaysThinkingEnabled: true` with a high `effortLevel` — a 50% override will trigger autocompaction far too early and shed context mid-task. When recommending `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE: 50`, check it's paired with a correspondingly low `MAX_THINKING_TOKENS`; if the project uses a high thinking budget instead, recommend a higher override percentage.
-- Is `MAX_THINKING_TOKENS` set? Consider `10000` (down from default 31999) for ~70% thinking cost savings.
+- Is `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` set? This only affects _proactive_ compaction, which itself only triggers under specific conditions (cloud sessions, `CLAUDE_CODE_AUTO_COMPACT_WINDOW` being set, or specific model versions without extended context). On a typical local session on the current default model, proactive compaction already applies at the model's own default threshold, so this override is very likely a no-op there. If you find it set on a plain local setup, flag it as probably-ineffective and not worth keeping. Only treat it as a legitimate, deliberate tuning if the project actually runs cloud sessions or an older model configuration where the override demonstrably applies.
+- Is `MAX_THINKING_TOKENS` set? Consider `10000` (down from the model's default cap of 31999) to lower the thinking-token cap. This reduces the ceiling, not necessarily actual usage — don't cite a specific savings percentage.
 - Is `CLAUDE_CODE_MAX_OUTPUT_TOKENS` set? Consider `16000` to prevent unnecessarily verbose responses.
-- Is `CLAUDE_CODE_SUBAGENT_MODEL` set? `haiku` gives ~80% cost savings for exploration subagents.
-- Are `alwaysThinkingEnabled` and `effortLevel` (in `settings.json`, not `env`) consistent with the autocompact override? These control thinking budget independently of `MAX_THINKING_TOKENS`. `alwaysThinkingEnabled: true` at `effortLevel: high` pushes token usage per turn up substantially — flag it alongside a low `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` as a mismatch.
+- Is `CLAUDE_CODE_SUBAGENT_MODEL` set? `haiku` meaningfully lowers cost for exploration subagents (Haiku pricing is a fraction of Sonnet/Opus) — avoid citing a specific percentage, it varies by workload.
+- Are `alwaysThinkingEnabled` and `effortLevel` (in `settings.json`, not `env`) set sensibly? These control thinking budget more directly than `MAX_THINKING_TOKENS` and independently of any autocompact override. `alwaysThinkingEnabled: true` at `effortLevel: high` pushes token usage per turn up substantially and can make context fill (and any compaction) happen far sooner than expected — flag this combination unless the user has a specific reason for always-on deep reasoning. Default recommendation: leave `alwaysThinkingEnabled` unset/`false` and `effortLevel` at `medium`.
 
 **`.claudeignore`:**
 
@@ -186,7 +186,7 @@ Run `/context` in a fresh session to get the current startup token count — if 
 - Are secrets hardcoded or using `${VAR}` expansion?
 - Is the project using `.mcp.json` (project-scope, recommended) or `~/.claude.json` (user-scope)?
 - Could any MCP server be replaced by a simpler CLI tool? (e.g., `gh` CLI instead of GitHub MCP for basic operations — no permanent context overhead)
-- Is Tool Search active? (auto-enabled on Sonnet 4+ / Opus 4+ when MCP tool descriptions exceed 10% of context)
+- Is Tool Search / deferred tool loading active? Current Claude Code models can defer MCP tool schemas and fetch them on demand once tool descriptions get large — the exact model gating and threshold aren't reliably documented, so don't cite specific numbers; just note whether the project's tool count is small enough that this isn't a concern, or large enough to be worth checking.
 
 ### 2e: Skills audit
 

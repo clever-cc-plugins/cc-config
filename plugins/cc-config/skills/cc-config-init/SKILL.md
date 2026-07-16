@@ -152,17 +152,13 @@ For formatter hooks the `|| true` suffix is mandatory — a formatter must never
 
 ### Environment variables
 
-Always include these cost-optimization defaults:
+Don't set `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` by default. It only affects _proactive_ compaction, which itself only triggers under specific conditions: cloud sessions, `CLAUDE_CODE_AUTO_COMPACT_WINDOW` being set, or specific model versions without extended context. On a typical local session on the current default model, proactive compaction already applies at the model's own default threshold — the override is very likely a no-op there, so recommending it as a blanket cost-optimization default is misleading. Only mention it as a niche, session/model-specific tuning if the user is running cloud sessions or an older model configuration where it demonstrably applies — never as an unconditional recommendation.
 
-```json
-{
-  "env": {
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "50"
-  }
-}
-```
+Include `MAX_THINKING_TOKENS: "10000"` as a cost-optimization default (down from the model's default cap of 31999). This lowers the _cap_ on thinking tokens per response — actual savings depend on how much of the budget a given task would otherwise use, so avoid stating a specific percentage.
 
-This overrides auto-compaction from the default ~83% (too late for good quality) to 50%.
+Include `CLAUDE_CODE_SUBAGENT_MODEL: "haiku"` to route subagent work to a cheaper model by default — meaningfully lowers exploration/subagent costs since Haiku pricing is a fraction of Sonnet/Opus. Avoid citing a specific savings percentage; it varies by workload.
+
+Also flag (as advisory text, not a file to write) the `alwaysThinkingEnabled` and `effortLevel` settings in `~/.claude/settings.json` — these are usually user-level, not project-level, but they control thinking budget more directly than `MAX_THINKING_TOKENS` and interact with it. Recommend leaving `alwaysThinkingEnabled` unset/`false` and `effortLevel` at its default (`medium`) unless the user has a specific need for deeper reasoning on every turn: `alwaysThinkingEnabled: true` combined with a high `effortLevel` substantially increases token usage per turn and can make context fill (and any compaction) happen far sooner than expected.
 
 ### Domain context folder
 
