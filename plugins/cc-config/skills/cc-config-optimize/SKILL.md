@@ -62,7 +62,7 @@ Read and catalog everything that exists. Do this thoroughly before suggesting an
 
 Count and report:
 
-- CLAUDE.md line count (target: 40–80, hard max: 200)
+- CLAUDE.md word count via `wc -w` (a token-density proxy; line count alone doesn't reflect token load since line length varies) — target ~300–600 words for a lean project-root file, higher only if `@`-imports carry the bulk of the detail out of the main file
 - Number of `@`-imports in CLAUDE.md
 - Number of active MCP servers
 - Number of skills
@@ -107,6 +107,12 @@ Check for these anti-patterns:
 - If `DESIGN.md` exists at the project root, does CLAUDE.md reference it via `@DESIGN.md **Read when:** building or editing any UI component`? Without this pointer Claude won't consult the design system when making UI decisions.
 - If the registered context location (`context/` by convention, or wherever CLAUDE.md's `## Context files` table points) contains files, does CLAUDE.md have a `## Context files` table registering them? Without this table, skills can't discover which context files exist or judge their relevance — they only find files they're explicitly pointed to. Note: this is a plain Markdown table, not an `@`-import — the table itself loads every message, but each underlying file loads only when a skill judges it relevant to the current task from its Summary.
 - Are there too many `IMPORTANT:` or `YOU MUST` markers? (if everything is marked important, nothing is)
+
+**Correctness checks** (verify against reality, not just structure):
+
+- For each command referenced in CLAUDE.md (build/test/lint/dev/deploy), verify it exists in the actual manifest (package.json scripts, Makefile targets, Cargo.toml, composer.json, etc.). Flag any command that would fail — renamed script, deleted target, wrong path.
+- For each file path referenced (via `@`-import, the `## Context files` table, or inline mention outside those two), verify with `test -f` that it resolves. Flag broken references.
+- Flag stack/version claims that contradict the actual dependency manifest (e.g., CLAUDE.md says "Node 16" but `package.json` `engines` says `>=20`).
 
 ### 2b: AGENTS.md audit
 
@@ -266,6 +272,16 @@ Add to "Nice to have." Do **not** add if Python is unavailable or below 3.10, or
 
 Skip. Do not mention Headroom.
 
+### 2i: Cross-file duplication (hierarchical CLAUDE.md trees)
+
+Relevant when a project uses multiple CLAUDE.md files across folder levels (common with the cc-content context-TOC pattern) — Claude Code auto-loads every CLAUDE.md up the directory chain, so content should live once at the shallowest level it applies to.
+
+1. Discover all CLAUDE.md files in the tree: `find . -name CLAUDE.md -not -path '*/node_modules/*' -not -path '*/vendor/*'`
+2. Read all discovered files.
+3. Compare content across levels — not just identical strings, but near-duplicate rules, conventions, or command lists restated at multiple levels.
+4. Distinguish **acceptable repetition** (a one-line pointer restating scope, e.g. "This file covers the `api/` package only") from **true duplication** (the same rule or command list copy-pasted across levels).
+5. Flag true duplicates: content should move to the shallowest common ancestor; deeper-level files should only add what's specific to that scope.
+
 ## Step 3: Generate findings report
 
 Organize findings into three categories:
@@ -277,6 +293,8 @@ Organize findings into three categories:
 - Deprecated patterns (ignorePatterns, npm-installed Claude Code)
 - Contradictory instructions
 - Hook-manager conflict: `.githooks/pre-commit` present alongside an active hook manager (the sync script is not running)
+- CLAUDE.md documents a command that doesn't exist in the actual manifest (renamed script, deleted target, wrong path) — Claude will confidently run something that fails
+- CLAUDE.md references a file path (outside `@`-imports and the `## Context files` table) that doesn't resolve
 
 ### Should fix (quality and cost improvements)
 
@@ -291,6 +309,7 @@ Organize findings into three categories:
 - Context files present in the registered context location but no `## Context files` table in CLAUDE.md — skills cannot discover context files without this table
 - `## Context files` table has malformed rows (not `Label | File | Summary`), duplicate Label/File values, or File paths that don't resolve to an existing file
 - Headroom installed but `.headroom/` not in `.gitignore`: machine-local Headroom files (session caches, `.headroom/CLAUDE.local.md`) must not be committed — they are per-machine and will break other clones
+- True duplicate content across nested CLAUDE.md files in a hierarchical tree (see 2i) — should live once at the shallowest common ancestor
 
 ### Nice to have (polish)
 
@@ -304,6 +323,7 @@ Organize findings into three categories:
 - Skills producing domain-specific output without referencing the registered context location (`context/` by convention, project root) — company-level knowledge duplicated or inlined per-skill
 - Context scope violations: company-level knowledge buried in campaign subfolders, or format-level guidelines in the shared context location instead of the relevant skill's folder
 - `## Context files` table summaries too vague to act as a relevance signal for skills (soft check — human judgment, e.g. "Writing style guidelines" instead of naming the specific tone, audience, or rules)
+- CLAUDE.md stack/version claims that don't match the actual dependency manifest (e.g., states "Node 16" while `package.json` `engines` says `>=20`)
 - Multi-level folder project without hierarchical CLAUDE.md files: if the repo has campaign, feature, or package subfolders where context meaningfully changes, each level should have its own CLAUDE.md that @-imports the relevant context for that scope — this lets Claude inherit all relevant context when started in any subfolder, without skills needing hard-coded paths to shared files. Any `## Context files` table in a nested CLAUDE.md follows the same path convention as the root one: `File` values are relative to that CLAUDE.md's own location, not the repository root.
 - Skills missing a terminal feedback step that solicits corrections into the learnings loop
 - PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in the registered context location or referenced via `@`-imports
@@ -311,6 +331,16 @@ Organize findings into three categories:
 - Headroom not installed but Python 3.10+ is available (and the project is not exclusively run in sandboxed/remote environments): Headroom compresses tool outputs, Bash results, and code in-flight before they reach the model — a different optimization level from env vars and `.claudeignore`. Real-workload savings: 73–92% on code-search and log-heavy tasks. Output tokens cost 5× more than input on Opus-class models, so in-flight compression compounds quickly. Install: `pip install "headroom-ai[all]"`. Start with `headroom wrap claude` (quickest path) or `headroom proxy --port 8787 --code-aware` (proxy mode; `--code-aware` is required for code compression). Run `headroom perf` after a few sessions to measure savings. Important constraint: requires a persistent local process — not compatible with remote/sandboxed sessions (Claude Code on the web, CI pipelines). If the project is used in both local and remote contexts, Headroom benefits only the local sessions.
 
 Present the findings to the user as a concise list, grouped by category. For each finding, state: what the issue is, why it matters, and what you'd change. Ask for approval before making changes.
+
+### Config health score
+
+Compute a single score from the categorized findings above — it reads directly off the counts you already produced, not a separate rubric:
+
+```
+score = max(0, 100 − 10 × must_fix_count − 4 × should_fix_count − 1 × nice_to_have_count)
+```
+
+Report this score once now (the "before" score) and again in Step 5 after approved changes are applied (the "after" score), so the user sees a concrete before/after (e.g. "Config health: 62/100 → 91/100") rather than only a word-count delta.
 
 ## Step 4: Apply approved changes
 
@@ -349,12 +379,13 @@ Preserve things that work well. Don't refactor for the sake of refactoring. If a
 After all changes:
 
 1. List every file modified or created, with one-line descriptions of changes.
-2. Report the new metrics: CLAUDE.md line count, number of active MCP servers, hooks configured, etc.
-3. Compare key metrics to before (e.g., "CLAUDE.md: 247 lines → 62 lines").
-4. If learnings were reviewed: report how many entries were promoted, how many deleted, and how many remain.
-5. Note anything you deliberately left unchanged and why.
-6. Suggest running `/cc-config-optimize` again periodically (e.g., after major features, after a few weeks of work) to prevent config drift.
-7. Remind the user to commit the changes.
+2. Report the new metrics: CLAUDE.md word count, number of active MCP servers, hooks configured, etc.
+3. Compare key metrics to before (e.g., "CLAUDE.md: 1,850 words → 480 words").
+4. Recompute the config health score from whatever findings remain unresolved and report the before/after (e.g. "Config health: 62/100 → 91/100").
+5. If learnings were reviewed: report how many entries were promoted, how many deleted, and how many remain.
+6. Note anything you deliberately left unchanged and why.
+7. Suggest running `/cc-config-optimize` again periodically (e.g., after major features, after a few weeks of work) to prevent config drift.
+8. Remind the user to commit the changes.
 
 ## Common optimization patterns
 
