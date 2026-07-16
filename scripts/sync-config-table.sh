@@ -110,6 +110,9 @@ while IFS= read -r line; do
     if [[ "$line" =~ ^\|[[:space:]]*\`([^\`]+)\`[[:space:]]*\|[[:space:]]*(.+)[[:space:]]*\| ]]; then
       file="${BASH_REMATCH[1]}"
       desc="${BASH_REMATCH[2]}"
+      # The capture is greedy and swallows the cell's trailing padding, which the
+      # rebuilt row would then re-pad — adding a space per row on every run.
+      desc="${desc%"${desc##*[![:space:]]}"}"
       [[ "$file" == "File" ]] && continue
       descriptions["$file"]="$desc"
     fi
@@ -156,6 +159,15 @@ done < "$CLAUDE_MD"
 if $in_section && ! $table_replaced; then
   echo "" >> "$tmpfile"
   echo "$new_table" >> "$tmpfile"
+fi
+
+# Normalize the candidate the same way the PostToolUse formatter normalizes
+# CLAUDE.md, so the comparison below reflects content rather than table padding.
+# Without this, the rebuilt table never matches the formatted file on disk and
+# CLAUDE.md is rewritten and staged on every commit, including commits that
+# touch no config file at all.
+if command -v prettier >/dev/null 2>&1; then
+  prettier --write --parser markdown "$tmpfile" > /dev/null 2>&1 || true
 fi
 
 if diff -q "$CLAUDE_MD" "$tmpfile" > /dev/null 2>&1; then
