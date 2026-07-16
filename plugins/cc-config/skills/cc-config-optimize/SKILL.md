@@ -153,6 +153,18 @@ Check for these anti-patterns:
 4. Also check if `scripts/sync-config-table.*` exists but `.githooks/pre-commit` is missing entirely — the script is orphaned and never runs. Same proposal: wire it into the active hook manager or recreate the `.githooks/` setup.
 5. If the sync script exists in a variant that doesn't match the filesystem conventions of the project (e.g., a `.sh` script in a Node-only project where the team prefers `.js`), note it as a nice-to-have for harmonization but don't force the change.
 
+**Sync script version drift:**
+
+`scripts/sync-config-table.sh` is copied into a project once, at init time, and nothing updates it afterwards — a plugin update does not reach into repos that were already initialized. Bug fixes to the script therefore only land when this skill runs. Check for it on every audit:
+
+1. Read the version marker from the project's copy: `grep -m1 'sync-config-table-version:' scripts/sync-config-table.sh`. A copy predating the versioning scheme has no marker — treat that as version 0.
+2. Read the marker from the plugin's canonical copy. It lives in the sibling `cc-config-init` skill directory, i.e. `../cc-config-init/scripts/sync-config-table.sh` relative to this skill's own directory. If you cannot locate it, say so and skip this check — do not fall back to guessing a version or reconstructing the script from memory.
+3. If the project's version is lower or absent, the copy is stale. **Show the user a diff of the two files and ask before overwriting.** Never overwrite silently: the marker only tells you the copy is old, not whether the user hand-edited it, and an unattended clobber would discard their changes without a trace.
+4. On confirmation, copy the plugin's file over the project's and re-apply `chmod +x`. Report which version replaced which.
+5. If the versions match, say nothing — this is a no-op on an up-to-date repo, and a clean audit shouldn't spend the user's attention on it.
+
+If the diff shows the project's copy was customized (scan rules added or removed rather than just older core logic), point out that the canonical script guards every scan with a directory check and self-adapts, so the customization is probably unnecessary — but let the user decide. Preserving a deliberate local fork is better than a refresh they didn't expect.
+
 **Secret scanning in pre-commit hooks:**
 
 Check if the project's active pre-commit hook (whether in `.githooks/`, `.husky/`, lefthook, or pre-commit framework) includes a secret scanner like gitleaks. If the project has sensitive files (`.env`, API keys, credentials) or `permissions.deny` entries for secrets, but no pre-commit secret scanning, recommend adding gitleaks to the active pre-commit hook:
@@ -305,6 +317,7 @@ Organize findings into three categories:
 - Skills without proper frontmatter guards
 - Learnings entries that should be promoted to CLAUDE.md or a skill
 - Orphaned `scripts/sync-config-table.*` with no active hook wiring
+- `scripts/sync-config-table.sh` older than the plugin's canonical copy (stale or missing version marker) — the repo is stranded on a version with known bugs
 - `DESIGN.md` present at project root but not referenced via `@DESIGN.md` in CLAUDE.md (Claude won't apply the design system without the pointer)
 - Context files present in the registered context location but no `## Context files` table in CLAUDE.md — skills cannot discover context files without this table
 - `## Context files` table has malformed rows (not `Label | File | Summary`), duplicate Label/File values, or File paths that don't resolve to an existing file
