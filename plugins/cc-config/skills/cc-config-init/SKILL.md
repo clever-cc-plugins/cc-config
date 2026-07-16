@@ -222,11 +222,16 @@ Structure:
 
 <Add this section only if a context/ folder was created in Step 2. Skills discover
 and load these files on demand — they are not pre-loaded. One row per file, with a
-short summary drawn from the file's content (10–20 words):>
+short summary drawn from the file's content (10–20 words).
 
-| Category   | File                | Summary                 |
-| ---------- | ------------------- | ----------------------- |
-| <category> | `context/<name>.md` | TODO: brief description |
+The Label is free-form — name it so the owner recognizes the file at a glance. The
+Summary is the load-bearing field: skills match it against what they need in order to
+decide whether a file is relevant, so make it specific ("Formal German, em-dash
+preferred — all corporate copy" beats "Writing style guidelines"):>
+
+| Label   | File                | Summary                 |
+| ------- | ------------------- | ----------------------- |
+| <label> | `context/<name>.md` | TODO: brief description |
 
 ## References
 

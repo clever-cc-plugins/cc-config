@@ -26,7 +26,7 @@ To use the cc-config skills locally in this repo (dogfooding), install from the 
 
 ```
 /plugin marketplace add clever-cc-plugins/marketplace
-/plugin install cc-config@cc-config
+/plugin install cc-config@clever-cc-plugins
 ```
 
 ## Don't
