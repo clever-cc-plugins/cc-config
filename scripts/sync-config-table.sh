@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sync-config-table-version: 2
+# sync-config-table-version: 3
 # Keeps the "Key Config Files" table in CLAUDE.md in sync with the filesystem.
 # - Removes rows for files that no longer exist
 # - Appends rows for new config files with a placeholder description
@@ -17,6 +17,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLAUDE_MD="$ROOT/CLAUDE.md"
+
+# CRLF-safe: carriage return computed at runtime (no literal CR in source).
+cr=$(printf '\r')
 
 if [[ ! -f "$CLAUDE_MD" ]]; then
   echo "sync-config-table: CLAUDE.md not found, skipping"
@@ -154,6 +157,7 @@ in_section=false
 table_replaced=false
 
 while IFS= read -r line; do
+  line="${line%$cr}"
   if [[ "$line" == *"## Key Config Files"* ]]; then
     in_section=true
     echo "$line" >> "$tmpfile"
