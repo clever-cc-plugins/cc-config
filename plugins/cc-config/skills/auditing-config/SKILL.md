@@ -1,7 +1,7 @@
 ---
 name: auditing-config
 description: Audit and optimize an existing Claude Code configuration against current best practices. Use this skill when a user asks to review, improve, clean up, or optimize their Claude Code setup, CLAUDE.md, settings, hooks, MCP servers, or skills. Also use when the user says things like "check my config", "is my CLAUDE.md too long", "reduce token costs", "tighten permissions", or "my Claude Code setup feels bloated". This skill assumes the project has code, and possibly documentation or OpenSpec specs, that inform the optimization.
-allowed-tools: Read, Grep, Glob, Edit(CLAUDE.md), Edit(**/CLAUDE.md), Edit(.claude/**), Edit(.githooks/**), Edit(.github/workflows/**), Edit(scripts/sync-config-table.js), Edit(.husky/pre-commit), Edit(AGENTS.md), Edit(.mcp.json), Edit(.gitignore), Edit(.claudeignore), Edit(scripts/sync-config-table.sh), Write(CLAUDE.md), Write(.claude/**), Write(.githooks/**), Write(.husky/pre-commit), Write(.gitignore), Write(.claudeignore), Write(.github/workflows/**), Write(scripts/sync-config-table.sh), Write(scripts/sync-config-table.js), Bash(git rev-parse:*), Bash(git log:*), Bash(git config core.hooksPath:*), Bash(jq:*), Bash(bash scripts/sync-config-table.sh), Bash(test -f:*), Bash(wc:*), Bash(date +%Y-%m-%d), Bash(chmod +x .githooks/pre-commit), Bash(rm .githooks/pre-commit), Bash(rmdir .githooks), Bash(chmod +x scripts/sync-config-table.sh)
+allowed-tools: Read, Grep, Glob, Edit(**/CLAUDE.md), Edit(.claude/**), Edit(.githooks/**), Edit(.github/workflows/**), Edit(scripts/sync-config-table.js), Edit(.husky/pre-commit), Edit(AGENTS.md), Edit(.mcp.json), Edit(.gitignore), Edit(.claudeignore), Edit(scripts/sync-config-table.sh), Write(CLAUDE.md), Write(.claude/**), Write(.githooks/**), Write(.husky/pre-commit), Write(.gitignore), Write(.claudeignore), Write(.github/workflows/**), Write(scripts/sync-config-table.sh), Write(scripts/sync-config-table.js), Bash(git rev-parse:*), Bash(git log:*), Bash(git config core.hooksPath:*), Bash(jq:*), Bash(bash scripts/sync-config-table.sh), Bash(test -f:*), Bash(wc:*), Bash(date +%Y-%m-%d), Bash(chmod +x .githooks/pre-commit), Bash(rm .githooks/pre-commit), Bash(rmdir .githooks), Bash(chmod +x scripts/sync-config-table.sh)
 argument-hint: "[optional: specific area to focus on, e.g. 'CLAUDE.md', 'hooks', 'costs']"
 ---
 
@@ -315,8 +315,6 @@ summary to .claude/learnings.md. Don't modify CLAUDE.md directly.
 ### 2h: Headroom audit
 
 Headroom is an optional in-flight compression layer that reduces context window usage by compressing tool outputs, Bash results, logs, and code before they reach the model — a different optimization level from env vars and `.claudeignore`, which operate at startup and configuration time.
-
-Run:
 
 Check whether `.headroom/` exists with Glob on `.headroom/*`. Then run:
 
