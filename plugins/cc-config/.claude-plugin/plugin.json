@@ -3,9 +3,11 @@
   "description": "Bootstrap and audit a best-practice Claude Code configuration",
   "version": "1.2.3",
   "author": {
-    "name": "Michael van Laar"
+    "name": "Michael van Laar",
+    "email": "michael@van-laar.de"
   },
   "homepage": "https://github.com/clever-cc-plugins/cc-config",
   "repository": "https://github.com/clever-cc-plugins/cc-config",
-  "license": "MIT"
+  "license": "MIT",
+  "icon": "./.claude-plugin/icon.png"
 }
