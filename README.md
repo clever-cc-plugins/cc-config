@@ -5,6 +5,8 @@
   </picture>
 </p>
 
+<img src="assets/icon.svg" align="right" width="96" height="96" alt="cc-config icon" />
+
 # cc-config
 
 Two Claude Code skills for setting up and maintaining a best-practice Claude Code configuration, distributed as a Claude Code plugin.
