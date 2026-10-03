@@ -8,6 +8,5 @@
   },
   "homepage": "https://github.com/clever-cc-plugins/cc-config",
   "repository": "https://github.com/clever-cc-plugins/cc-config",
-  "license": "MIT",
-  "icon": "./.claude-plugin/icon.png"
+  "license": "MIT"
 }
