@@ -178,7 +178,7 @@ check every audit:
 - Are sensitive files protected by `permissions.deny`? At minimum the real secret-bearing env files (`.env`, `.env.local`, `.env.*.local`, `.env.development`, `.env.production`, `.env.staging`, `.env.test`) and `secrets/**`.
 - **Flag a broad `Read(.env.*)` or `Read(./.env.*)` deny rule as a misconfiguration.** That glob also blocks example/template files (`.env.example`, `.env.sample`, `.env.template`, `.env.dist`, `example.env`), which hold no secrets and must stay readable for documentation. Because Claude Code evaluates `deny` before `allow` with no negation in `Read()` rules, a denied path cannot be re-allowed — an `allow(.env.example)` does not override it. Recommend migrating to the enumerated deny list above (leaving example files unmatched), and pairing it with the PreToolUse secret-file guard hook for full `.env.*` coverage with the example carve-out.
 - Is `permissions.deny` used instead of the deprecated `ignorePatterns`?
-- Are destructive commands blocked? (`rm -rf`, and consider `curl`/`wget` unless specifically needed)
+- Are destructive commands blocked? (`rm -rf`, and consider network download commands unless specifically needed)
 - Are safe, frequently-used commands in `permissions.allow`? (reduces approval fatigue)
 
 **Hooks (Claude Code):**
