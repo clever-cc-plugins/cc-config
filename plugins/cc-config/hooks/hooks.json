@@ -5,11 +5,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/check-optimize-staleness.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-optimize-staleness.sh"
           },
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/hooks/auto-git-pull.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/auto-git-pull.sh"
           }
         ]
       }
