@@ -1,7 +1,7 @@
 ---
 name: bootstrapping-config
 description: Bootstrap a best-practice Claude Code configuration for a new or unconfigured project. Use this skill when a user asks to set up Claude Code, initialize a project, create a CLAUDE.md, or configure permissions/hooks/settings for the first time. Also use when the user says things like "set up this project", "configure Claude Code", "bootstrap config", or "better /init". This skill replaces the built-in /init with a leaner, more opinionated setup grounded in current best practices.
-allowed-tools: Read, Grep, Glob, Edit(CLAUDE.md), Edit(**/CLAUDE.md), Edit(.claude/**), Edit(.githooks/**), Edit(.gitignore), Edit(.claudeignore), Edit(scripts/sync-config-table.sh), Write(CLAUDE.md), Write(.claude/**), Write(.githooks/**), Write(.gitignore), Write(.claudeignore), Write(.github/workflows/**), Write(scripts/sync-config-table.sh), Bash(git rev-parse:*), Bash(git log:*), Bash(git config core.hooksPath:*), Bash(jq:*), Bash(test -f:*), Bash(ls:*), Bash(find:*), Bash(grep:*), Bash(wc:*), Bash(date +%Y-%m-%d), Bash(chmod +x .githooks/pre-commit), Bash(chmod +x scripts/sync-config-table.sh)
+allowed-tools: Read, Grep, Glob, Edit(CLAUDE.md), Edit(**/CLAUDE.md), Edit(.claude/**), Edit(.githooks/**), Edit(.husky/pre-commit), Edit(AGENTS.md), Edit(.mcp.json), Edit(.gitignore), Edit(.claudeignore), Edit(scripts/sync-config-table.sh), Write(CLAUDE.md), Write(.claude/**), Write(.githooks/**), Write(.husky/pre-commit), Write(.gitignore), Write(.claudeignore), Write(.github/workflows/**), Write(scripts/sync-config-table.sh), Write(scripts/sync-config-table.js), Bash(git rev-parse:*), Bash(git log:*), Bash(git config core.hooksPath:*), Bash(jq:*), Bash(test -f:*), Bash(ls:*), Bash(grep:*), Bash(wc:*), Bash(date +%Y-%m-%d), Bash(chmod +x .githooks/pre-commit), Bash(rm .githooks/pre-commit), Bash(rmdir .githooks), Bash(chmod +x scripts/sync-config-table.sh)
 argument-hint: "[optional: brief project description]"
 ---
 
@@ -470,9 +470,7 @@ Does not qualify: standard skill behavior applied without deviation; facts alrea
 
 Check for the file before appending:
 
-```bash
-ls .claude/learnings.md 2>/dev/null && echo "exists" || echo "missing"
-```
+Use Glob on `.claude/learnings.md` to check whether it exists.
 
 Standard header when creating the file:
 
