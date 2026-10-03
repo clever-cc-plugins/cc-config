@@ -468,9 +468,7 @@ Qualifies: something about this project that differs from what this skill assume
 
 Does not qualify: standard skill behavior applied without deviation; facts already present in CLAUDE.md, AGENTS.md, or other config files; anything a reader could determine from the repo without this skill having run; facts semantically equivalent to any existing `.claude/learnings.md` entry — when in doubt, skip.
 
-Check for the file before appending:
-
-Use Glob on `.claude/learnings.md` to check whether it exists.
+Before appending, use Glob on `.claude/learnings.md` to check whether the file exists.
 
 Standard header when creating the file:
 
