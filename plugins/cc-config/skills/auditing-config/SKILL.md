@@ -1,7 +1,7 @@
 ---
 name: auditing-config
 description: Audit and optimize an existing Claude Code configuration against current best practices. Use this skill when a user asks to review, improve, clean up, or optimize their Claude Code setup, CLAUDE.md, settings, hooks, MCP servers, or skills. Also use when the user says things like "check my config", "is my CLAUDE.md too long", "reduce token costs", "tighten permissions", or "my Claude Code setup feels bloated". This skill assumes the project has code, and possibly documentation or OpenSpec specs, that inform the optimization.
-allowed-tools: Read, Grep, Glob, Edit(**/CLAUDE.md), Edit(.claude/**), Edit(.githooks/**), Edit(.github/workflows/**), Edit(scripts/sync-config-table.js), Edit(.husky/pre-commit), Edit(AGENTS.md), Edit(.mcp.json), Edit(.gitignore), Edit(.claudeignore), Edit(scripts/sync-config-table.sh), Write(CLAUDE.md), Write(.claude/**), Write(.githooks/**), Write(.husky/pre-commit), Write(.gitignore), Write(.claudeignore), Write(.github/workflows/**), Write(scripts/sync-config-table.sh), Write(scripts/sync-config-table.js), Bash(git rev-parse:*), Bash(git log:*), Bash(git config core.hooksPath:*), Bash(jq:*), Bash(bash scripts/sync-config-table.sh), Bash(test -f:*), Bash(wc:*), Bash(date +%Y-%m-%d), Bash(chmod +x .githooks/pre-commit), Bash(rm .githooks/pre-commit), Bash(rmdir .githooks), Bash(chmod +x scripts/sync-config-table.sh)
+allowed-tools: Read, Grep, Glob, Edit(**/CLAUDE.md), Edit(.claude/**), Edit(.githooks/**), Edit(.github/workflows/**), Edit(scripts/sync-config-table.js), Edit(.husky/pre-commit), Edit(AGENTS.md), Edit(.mcp.json), Edit(.gitignore), Edit(scripts/sync-config-table.sh), Write(CLAUDE.md), Write(.claude/**), Write(.githooks/**), Write(.husky/pre-commit), Write(.gitignore), Write(.github/workflows/**), Write(scripts/sync-config-table.sh), Write(scripts/sync-config-table.js), Bash(git rev-parse:*), Bash(git log:*), Bash(git config core.hooksPath:*), Bash(jq:*), Bash(bash scripts/sync-config-table.sh), Bash(test -f:*), Bash(wc:*), Bash(date +%Y-%m-%d), Bash(chmod +x .githooks/pre-commit), Bash(rm .githooks/pre-commit), Bash(rmdir .githooks), Bash(chmod +x scripts/sync-config-table.sh)
 argument-hint: "[optional: specific area to focus on, e.g. 'CLAUDE.md', 'hooks', 'costs']"
 ---
 
@@ -100,7 +100,7 @@ Check for these anti-patterns:
 - Personality instructions ("be a senior engineer", "think carefully") → remove
 - File-by-file codebase descriptions → remove (Claude can read files itself)
 - Domain knowledge that's rarely needed → move to a skill
-- Long inline documentation → extract to a reference file and use `@`-import with a trigger condition
+- Long inline documentation needed only sometimes → move to a `.claude/rules/<topic>.md` with `paths:` frontmatter or to a skill (both load on demand). An `@`-import does not help here: imported files are expanded into context with the importing file
 - Duplicated information that also exists in AGENTS.md or OpenSpec → remove from CLAUDE.md, reference instead
 
 **Missing essentials** (things to add if absent):
@@ -110,15 +110,15 @@ Check for these anti-patterns:
 - Conventions that deviate from standard or that Claude commonly gets wrong
 - Explicit "Don't" section for known failure modes
 - Compact instructions (what to preserve when compacting)
-- Progressive disclosure pointers for reference docs (`@path **Read when:** <trigger>`)
+- On-demand loading for reference docs (path-scoped `.claude/rules/` or skills; `@`-imports load eagerly)
 - Learnings section (instructs Claude to log corrections to `.claude/learnings.md` instead of modifying CLAUDE.md directly)
 
 **Structural checks:**
 
-- Is the file using `@`-imports for large reference material? (imports reduce token waste by up to 59%)
-- If AGENTS.md exists, does CLAUDE.md import it via `@AGENTS.md` instead of duplicating content?
+- Is large reference material loaded eagerly via `@`-imports that every session pays for? Imports organize a file but don't reduce context cost — flag big imports that are only sometimes relevant and propose path-scoped rules or a skill instead. Also check size: the docs recommend under 200 lines per CLAUDE.md.
+- If AGENTS.md exists, does CLAUDE.md import it via `@AGENTS.md` instead of duplicating content? (Claude Code 2.1.277+ reads AGENTS.md natively only when no CLAUDE.md exists in or above the working directory.)
 - If OpenSpec is used, does CLAUDE.md reference `@openspec/project.md` for project context?
-- If `DESIGN.md` exists at the project root, does CLAUDE.md reference it via `@DESIGN.md **Read when:** building or editing any UI component`? Without this pointer Claude won't consult the design system when making UI decisions.
+- If `DESIGN.md` exists at the project root, does CLAUDE.md import it via `@DESIGN.md` (small file) or does a `.claude/rules/` file with UI `paths:` globs load it (large file)? Without either, Claude won't consult the design system when making UI decisions.
 - If the registered context location (`context/` by convention, or wherever CLAUDE.md's `## Context files` table points) contains files, does CLAUDE.md have a `## Context files` table registering them? Without this table, skills can't discover which context files exist or judge their relevance — they only find files they're explicitly pointed to. Note: this is a plain Markdown table, not an `@`-import — the table itself loads every message, but each underlying file loads only when a skill judges it relevant to the current task from its Summary.
 - Are there too many `IMPORTANT:` or `YOU MUST` markers? (if everything is marked important, nothing is)
 
@@ -176,7 +176,9 @@ check every audit:
 **Permissions:**
 
 - Are sensitive files protected by `permissions.deny`? At minimum the real secret-bearing env files (`.env`, `.env.local`, `.env.*.local`, `.env.development`, `.env.production`, `.env.staging`, `.env.test`) and `secrets/**`.
-- **Flag a broad `Read(.env.*)` or `Read(./.env.*)` deny rule as a misconfiguration.** That glob also blocks example/template files (`.env.example`, `.env.sample`, `.env.template`, `.env.dist`, `example.env`), which hold no secrets and must stay readable for documentation. Because Claude Code evaluates `deny` before `allow` with no negation in `Read()` rules, a denied path cannot be re-allowed — an `allow(.env.example)` does not override it. Recommend migrating to the enumerated deny list above (leaving example files unmatched), and pairing it with the PreToolUse secret-file guard hook for full `.env.*` coverage with the example carve-out.
+- **Flag a broad `Read(.env.*)` or `Read(./.env.*)` deny rule** unless it is followed by a negation carve-out for example files (e.g. `Read(!.env.example)`; the docs describe gitignore-style `!` negation in deny lists, but it is version-dependent — verify before relying on it). Without a carve-out the glob blocks `.env.example`/`.env.sample`/`.env.template`/`.env.dist`/`example.env`, which hold no secrets, and an `allow` can never re-open a denied path (deny → ask → allow). The safe default remains the enumerated list above plus the PreToolUse secret-file guard.
+- Read deny rules cover `cat`/`head`/`tail` on a named file in Bash but not `grep -r` or scripts that open files themselves; `Bash(curl:*)`/`Bash(wget:*)` denies miss `/usr/bin/curl` and `sh -c`. Treat them as guard rails, not a boundary — suggest the sandbox only if the user needs a real one.
+- Is `git push` in `permissions.ask` (so it prompts even in `auto` mode), and are `allow` entries named git subcommands (`Bash(git status *)`, …) rather than a blanket `Bash(git *)`, which would also approve pushes via aliases or `git -c`?
 - Is `permissions.deny` used instead of the deprecated `ignorePatterns`?
 - Are destructive commands blocked? (`rm -rf`, and consider network download commands unless specifically needed)
 - Are safe, frequently-used commands in `permissions.allow`? (reduces approval fatigue)
@@ -184,9 +186,8 @@ check every audit:
 **Hooks (Claude Code):**
 
 - Is there a PostToolUse formatter hook? If a formatter exists in the project but no hook runs it, this is a high-impact gap. Valid formatter targets include code formatters (prettier, ruff, rustfmt, gofmt, php-cs-fixer) and Markdown formatters (prettier on `.md`, `markdownlint --fix`) — don't skip the audit just because the project produces content rather than code.
-- Is there a PreToolUse hook protecting sensitive files? (defense in depth beyond `permissions.deny`) A `Read|Edit` guard that blocks `.env`/`.env.*` basenames while carving out `*.example`/`*.sample`/`*.template`/`*.dist`/`example.env` gives broad coverage that the enumerated deny list cannot, since deny rules must leave example files unmatched. See the secret-file guard hook in `/bootstrapping-config`.
-- Do all hooks use `|| true` for graceful degradation? **Exception: security hooks must fail closed.** A secret-file guard must exit non-zero (block) on the bad path and must not be softened with `|| true`, or it will pass silently when its dependency (e.g. `jq`) is missing. Only formatter/lint hooks should carry `|| true`.
-- Are hooks doing "block at submit" rather than "block at write"? (fewer interrupts, smoother flow)
+- Is there a PreToolUse hook protecting sensitive files? (defense in depth beyond `permissions.deny`) A `Read|Edit|Write` guard (matcher must include `Write`) that blocks `.env`/`.env.*` basenames while carving out `*.example`/`*.sample`/`*.template`/`*.dist`/`example.env` gives broad coverage that the enumerated deny list cannot, since deny rules must leave example files unmatched. See the secret-file guard script in `/bootstrapping-config`; flag an inline `jq` one-liner that exits 0 when `jq` is missing (fails open) and a relative `bash .claude/…` command (use `$CLAUDE_PROJECT_DIR`).
+- Do all hooks use `|| true` for graceful degradation? **Exception: security hooks must fail closed.** A secret-file guard must exit **2** (any other non-zero code is non-blocking and the call proceeds) on the bad path and must not be softened with `|| true`, or it will pass silently when its dependency (e.g. `jq`) is missing. Only formatter/lint hooks should carry `|| true`.
 
 **Git hooks and hook-manager drift:**
 
@@ -227,11 +228,11 @@ This catches secrets committed by both Claude Code and the user. Unlike `permiss
 
 **Environment variables:**
 
-- Is `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` set? This only affects _proactive_ compaction, which itself only triggers under specific conditions (cloud sessions, `CLAUDE_CODE_AUTO_COMPACT_WINDOW` being set, or specific model versions without extended context). On a typical local session on the current default model, proactive compaction already applies at the model's own default threshold, so this override is very likely a no-op there. If you find it set on a plain local setup, flag it as probably-ineffective and not worth keeping. Only treat it as a legitimate, deliberate tuning if the project actually runs cloud sessions or an older model configuration where the override demonstrably applies.
-- Is `MAX_THINKING_TOKENS` set? Consider `10000` (down from the model's default cap of 31999) to lower the thinking-token cap. This reduces the ceiling, not necessarily actual usage — don't cite a specific savings percentage.
-- Is `CLAUDE_CODE_MAX_OUTPUT_TOKENS` set? Consider `16000` to prevent unnecessarily verbose responses.
-- Is `CLAUDE_CODE_SUBAGENT_MODEL` set? `haiku` meaningfully lowers cost for exploration subagents (Haiku pricing is a fraction of Sonnet/Opus) — avoid citing a specific percentage, it varies by workload. Note this env var overrides every subagent's own `model:` frontmatter, so check whether that's desired for any judgment-heavy analysis subagents the project itself defines.
-- Are `alwaysThinkingEnabled` and `effortLevel` (in `settings.json`, not `env`) set sensibly? These control thinking budget more directly than `MAX_THINKING_TOKENS` and independently of any autocompact override. `alwaysThinkingEnabled: true` at `effortLevel: high` pushes token usage per turn up substantially and can make context fill (and any compaction) happen far sooner than expected — flag this combination unless the user has a specific reason for always-on deep reasoning. Default recommendation: leave `alwaysThinkingEnabled` unset/`false` and `effortLevel` at `medium`.
+- `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`: can only _lower_ the compaction threshold and only applies in sessions that compact before the model's context limit. On a plain local setup it is likely a no-op — flag as probably ineffective unless the project demonstrably needs it.
+- `MAX_THINKING_TOKENS`: no effect on Opus 4.7+, Sonnet 5+, Haiku 5.5 or Fable (always adaptive); it is only a fixed budget on Opus/Sonnet 4.6 with adaptive reasoning disabled. Flag as obsolete and suggest removing it.
+- `CLAUDE_CODE_MAX_OUTPUT_TOKENS`: defaults and caps vary by model; raising it shrinks the context available before auto-compaction. A low value can truncate long answers — only keep it if there's a reason.
+- `CLAUDE_CODE_SUBAGENT_MODEL`: `haiku` lowers cost for exploration subagents (no savings percentage — it varies). It overrides every subagent's own `model:` frontmatter, so check that's desired for judgment-heavy subagents the project defines.
+- `alwaysThinkingEnabled` and `effortLevel` (in `settings.json`, not `env`): thinking is on by default, so `alwaysThinkingEnabled: true` changes nothing — only `false` has an effect. `effortLevel` accepts `low`/`medium`/`high`/`xhigh` (unset by default); higher levels fill context faster. Flag only a high setting with no stated reason.
 
 **Auto-pull on session start:**
 
@@ -241,17 +242,7 @@ Check whether the flag is set. If it is **not** set and the project is a git rep
 
 **`.claudeignore`:**
 
-Check whether a `.claudeignore` file exists. This file (`.gitignore` syntax) tells Claude Code which paths to skip entirely when indexing the project, reducing invisible startup token overhead.
-
-Flag as a "should fix" if:
-
-- The repo has `node_modules/`, `vendor/`, `.venv/`, or other dependency trees present and no `.claudeignore` excludes them.
-- Build output directories exist (`dist/`, `build/`, `.next/`, `target/`, `_site/`, `coverage/`) and are not excluded.
-- Large binary or media asset folders are present that Claude would never usefully read.
-
-Flag as "nice to have" if the repo is small and tidy but could benefit from exclusions as it grows.
-
-Run `/context` in a fresh session to get the current startup token count — if it exceeds ~10,000 tokens before any user message, a missing `.claudeignore` is a likely contributor.
+`.claudeignore` is not a documented Claude Code feature (absent from the settings reference and docs index), so it likely has no effect. If one exists, flag it as a "should fix": explain it probably doesn't reduce token use and propose `permissions.deny` `Read` rules for paths Claude must not read (dependency trees and build output are already skipped by Glob/Grep via `.gitignore`). Never recommend creating one. To check startup overhead, run `/context` in a fresh session; above ~10,000 tokens, look at CLAUDE.md size, eager `@`-imports and MCP tool count, and try `/doctor prompt-audit`.
 
 ### 2d: MCP audit
 
@@ -268,7 +259,7 @@ Run `/context` in a fresh session to get the current startup token count — if 
 - Are skills with side effects (deploy, commit, publish) using `disable-model-invocation: true`?
 - Are read-only analysis skills using `allowed-tools` restrictions?
 - Are there `.claude/commands/` files that should be migrated to the skills format?
-- Is skill content concise? (target <50 lines per SKILL.md, split if longer)
+- Is skill content concise? (docs: keep SKILL.md under 500 lines and move reference material to supporting files; `description` + `when_to_use` are truncated at 1,536 characters)
 - If OpenSpec is used: are OpenSpec skills duplicated across multiple tool directories (`.claude/`, `.codex/`, `.gemini/`, `.github/`)? If so, flag this as a maintenance risk and suggest consolidation.
 - Do skills that produce domain-specific output correctly separate context by scope? Check for three types of violations:
   - **Company-level knowledge inlined or duplicated per-skill**: brand voice, company profile, buyer personas, architecture decisions belong in the registered context location (`context/` by convention, project root). Consolidate and register in the `## Context files` table in CLAUDE.md — update once, every skill reflects the change.
@@ -314,31 +305,7 @@ summary to .claude/learnings.md. Don't modify CLAUDE.md directly.
 
 ### 2h: Headroom audit
 
-Headroom is an optional in-flight compression layer that reduces context window usage by compressing tool outputs, Bash results, logs, and code before they reach the model — a different optimization level from env vars and `.claudeignore`, which operate at startup and configuration time.
-
-Check whether `.headroom/` exists with Glob on `.headroom/*`. Then run:
-
-```bash
-which headroom 2>/dev/null && headroom --version 2>/dev/null | head -1 || echo "headroom-not-installed"
-python3 -c "import sys; print('python-ok' if sys.version_info >= (3, 10) else 'python-too-old')" 2>/dev/null || echo "python-unavailable"
-```
-
-**If Headroom is installed:**
-
-1. **`.gitignore` check**: Headroom stores machine-local data in `.headroom/` — session caches and `.headroom/CLAUDE.local.md` (machine-local learnings). These must not be committed: they are per-machine, ephemeral, and will conflict across clones. If `.headroom/` is not in `.gitignore`, flag as "should fix."
-2. **Integration mode**: Detect which mode is in use:
-   - _MCP mode_: look for a Headroom entry in `.mcp.json`. Verify it is still in the active server list; stale entries add tool-count overhead for nothing.
-   - _Proxy/wrap mode_: `headroom wrap claude` or `headroom proxy --port 8787 --code-aware` must be run before each session. If this is not documented in CLAUDE.md (or a project README), note it — teammates will not know to start it.
-3. **Code-aware flag**: For code compression to activate, the proxy must be started with `--code-aware`. Without it, code files produce `tokens_saved: 0`. Flag as a note if the user is on proxy mode and this flag is not documented.
-4. **Learnings coexistence**: Headroom's `.headroom/CLAUDE.local.md` and cc-config's `.claude/learnings.md` serve different purposes and should both be kept. Headroom's file captures machine-local session patterns; cc-config's file captures explicit user corrections and is team-shared (committed to git, feeds the `auditing-config` promotion cycle). Do not consolidate them.
-
-**If Headroom is not installed and Python 3.10+ is available:**
-
-Add to "Nice to have." Do **not** add if Python is unavailable or below 3.10, or if the project is known to run exclusively in sandboxed/remote environments (CI pipelines, Claude Code on the web) — Headroom requires a persistent local process and is incompatible with those contexts.
-
-**If Python is unavailable or below 3.10:**
-
-Skip. Do not mention Headroom.
+Optional in-flight compression layer. Check `.headroom/` with Glob, then follow the "Headroom audit" section of [reference.md](reference.md) (gitignore check, integration mode, install suggestion, and when to skip silently).
 
 ### 2i: Cross-file duplication (hierarchical CLAUDE.md trees)
 
@@ -368,13 +335,16 @@ Using the metrics and findings gathered in Step 1–2, organize findings into th
 
 - CLAUDE.md bloat (>80 lines without good reason)
 - Missing formatter hook
-- Missing cost-optimization env vars
+- Obsolete or ineffective env vars (`MAX_THINKING_TOKENS` on current models, `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` on plain local setups)
+- `.claudeignore` present (not a documented feature; likely no effect)
+- Broad `Read(.env.*)` deny without a negation carve-out, or a secret-file guard hook that fails open / omits `Write`
+- `git push` not in `permissions.ask`, or blanket `Bash(git *)` in `allow`
 - Redundant content between files
 - Skills without proper frontmatter guards
 - Learnings entries that should be promoted to CLAUDE.md or a skill
 - Orphaned `scripts/sync-config-table.*` with no active hook wiring
 - `scripts/sync-config-table.sh` older than the plugin's canonical copy (stale or missing version marker) — the repo is stranded on a version with known bugs
-- `DESIGN.md` present at project root but not referenced via `@DESIGN.md` in CLAUDE.md (Claude won't apply the design system without the pointer)
+- `DESIGN.md` present at project root but neither imported via `@DESIGN.md` nor loaded by a path-scoped rule (Claude won't apply the design system without it)
 - Context files present in the registered context location but no `## Context files` table in CLAUDE.md — skills cannot discover context files without this table
 - `## Context files` table has malformed rows (not `Label | File | Summary`), duplicate Label/File values, or File paths that don't resolve to an existing file
 - `## Context files` table exists but is missing the `<!-- cc-config: context-toc-registered -->` marker comment right after the heading (v4+ `sync-config-table.sh` greps for this exact string, not the heading text, to decide whether `context/` files belong in `## Key Config Files` too — without the marker, the sync script will re-list every context file there with a generic placeholder, duplicating the registered table). Add the marker; don't rename or reword it.
@@ -386,7 +356,7 @@ Using the metrics and findings gathered in Step 1–2, organize findings into th
 
 ### Nice to have (polish)
 
-- Missing progressive disclosure for reference docs
+- Large, rarely needed reference content loaded eagerly via `@`-imports (move to path-scoped rules or a skill)
 - Missing compact instructions
 - Missing Learnings section in CLAUDE.md
 - Skills that could be created for recurring workflows
@@ -400,8 +370,8 @@ Using the metrics and findings gathered in Step 1–2, organize findings into th
 - Multi-level folder project without hierarchical CLAUDE.md files: if the repo has campaign, feature, or package subfolders where context meaningfully changes, each level should have its own CLAUDE.md that @-imports the relevant context for that scope — this lets Claude inherit all relevant context when started in any subfolder, without skills needing hard-coded paths to shared files. Any `## Context files` table in a nested CLAUDE.md follows the same path convention as the root one: `File` values are relative to that CLAUDE.md's own location, not the repository root.
 - Skills missing a terminal feedback step that solicits corrections into the learnings loop
 - PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in the registered context location or referenced via `@`-imports
-- Missing `.claudeignore` startup token check: suggest the user run `/context` in a fresh session to measure actual startup overhead — if high, a missing or incomplete `.claudeignore` is a likely cause
-- Headroom not installed but Python 3.10+ is available (and the project is not exclusively run in sandboxed/remote environments): Headroom compresses tool outputs, Bash results, and code in-flight before they reach the model — a different optimization level from env vars and `.claudeignore`. Real-workload savings: 73–92% on code-search and log-heavy tasks. Output tokens cost 5× more than input on Opus-class models, so in-flight compression compounds quickly. Install: `pip install "headroom-ai[all]"`. Start with `headroom wrap claude` (quickest path) or `headroom proxy --port 8787 --code-aware` (proxy mode; `--code-aware` is required for code compression). Run `headroom perf` after a few sessions to measure savings. Important constraint: requires a persistent local process — not compatible with remote/sandboxed sessions (Claude Code on the web, CI pipelines). If the project is used in both local and remote contexts, Headroom benefits only the local sessions.
+- Startup token overhead unmeasured: suggest `/context` in a fresh session (and `/doctor prompt-audit`) if CLAUDE.md is large or many imports/MCP servers are present
+- Headroom not installed but Python 3.10+ is available and the project runs locally (not only in remote/sandboxed sessions): offer it per [reference.md](reference.md) — unverified vendor savings figures live there; don't quote them as facts
 - `CC_CONFIG_AUTO_GIT_PULL` not set and the project is a git repo with a configured remote: ask whether the user works on this repo from multiple machines and forgets to `git pull` before starting a session. If yes, offer to set `CC_CONFIG_AUTO_GIT_PULL=true` in the `env` block of `.claude/settings.local.json` (create the file if absent) so the bundled `auto-git-pull.sh` `SessionStart` hook fast-forwards the branch automatically, skipping (with a message) if history has diverged. Never enable this without asking, and never write it to the committed `.claude/settings.json`.
 
 Present the findings to the user as a concise list, grouped by category. For each finding, state: what the issue is, why it matters, and what you'd change. Ask for approval before making changes.
@@ -481,68 +451,16 @@ After all changes:
 
 ### Audit staleness reminder
 
-`cc-config` ships a `SessionStart` hook (`plugins/cc-config/hooks/check-optimize-staleness.sh`,
-declared in `plugins/cc-config/hooks/hooks.json`) that fires in every project the plugin is
-active in — no per-repo `.claude/settings.json` wiring needed, since plugin-declared hooks
-apply automatically wherever the plugin is installed. On session start it reads the
-`last-optimize-run` marker this step writes, compares it against the repo's current commit
-count and date, and — only if the project has drifted noticeably since that baseline (default
-thresholds: 20+ commits, or 14+ days with at least one new commit) — emits a short reminder
-suggesting `/auditing-config`. It never blocks anything and stays silent otherwise,
-including in repos that don't use `cc-config` at all (it only speaks up if it also finds
-`scripts/sync-config-table.sh`, i.e. clear evidence the project already opted in).
-This step is what keeps that hook's comparison meaningful — without a fresh marker, every
-session in an active repo would eventually trip the threshold and nag regardless of how
-recently an audit actually ran.
+The bundled `SessionStart` hook compares the `last-optimize-run` marker written above against the repo's commit count and date and nudges when the project drifts (defaults: 20+ commits, or 14+ days with new commits). Keeping the marker fresh is what makes that comparison meaningful. Mechanism details: "Audit staleness reminder" in [reference.md](reference.md).
 
 ## Common optimization patterns
 
-These are recurring improvements you'll often apply:
-
-**CLAUDE.md → Skills migration:**
-When CLAUDE.md contains domain knowledge that's only needed for specific tasks, extract it into a skill. The skill loads on demand (~100 tokens metadata at rest), while CLAUDE.md content loads every message.
-
-**Monolithic docs → Progressive disclosure:**
-Replace inline documentation in CLAUDE.md with `@`-import pointers:
-
-```markdown
-### API Architecture — @docs/api-architecture.md
-
-**Read when:** Adding or modifying API endpoints
-```
-
-**AGENTS.md as single source of truth:**
-If the project has both CLAUDE.md and AGENTS.md with overlapping content, consolidate the universal parts into AGENTS.md and reduce CLAUDE.md to a slim adapter:
-
-```markdown
-@AGENTS.md
-
-## Claude-Code-specific
-
-- <only Claude-specific additions here>
-```
-
-**OpenSpec integration:**
-If OpenSpec is present, CLAUDE.md should reference it rather than duplicate project context:
-
-```markdown
-@openspec/project.md
-```
-
-**Hook-ification of repeated instructions:**
-If CLAUDE.md says "always run prettier after editing" — that's a hook, not an instruction. Replace the instruction with a deterministic PostToolUse hook and remove the line from CLAUDE.md.
-
-**Learnings graduation:**
-When `.claude/learnings.md` has accumulated entries, recurring patterns graduate into CLAUDE.md rules, skills, or hooks. One-off corrections get deleted. The file stays lean or gets removed entirely until the next correction cycle.
-
-**Hook-manager migration for sync-config-table:**
-When a project gains Husky or another hook manager after `/bootstrapping-config` was used, the `.githooks/pre-commit` goes silent because `core.hooksPath` is taken over. Migrate the sync script into the active hook manager's pre-commit hook and remove the now-dead `.githooks/` directory.
+See "Common optimization patterns" in [reference.md](reference.md): CLAUDE.md → skills migration, conditional loading via path-scoped rules, AGENTS.md as source of truth, OpenSpec, hook-ification, learnings graduation, hook-manager migration.
 
 ## What NOT to do
 
 - Don't refactor things that work well. If a config is correct and clean, say so.
-- Don't add MCP servers speculatively. Only suggest servers that address a concrete gap.
-- Don't create skills for workflows that haven't been repeated yet.
+- Don't add MCP servers or create skills speculatively. Only suggest servers that address a concrete gap, and skills for workflows that have already been repeated.
 - Don't modify user-level files (`~/.claude/CLAUDE.md`, `~/.claude.json`) without explicit permission.
 - Don't remove functionality. If something serves a purpose, keep it — just optimize how it's expressed.
 - Don't make the config dependent on tools or servers the user hasn't installed.

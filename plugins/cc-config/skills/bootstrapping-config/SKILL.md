@@ -1,7 +1,7 @@
 ---
 name: bootstrapping-config
 description: Bootstrap a best-practice Claude Code configuration for a new or unconfigured project. Use this skill when a user asks to set up Claude Code, initialize a project, create a CLAUDE.md, or configure permissions/hooks/settings for the first time. Also use when the user says things like "set up this project", "configure Claude Code", "bootstrap config", or "better /init". This skill replaces the built-in /init with a leaner, more opinionated setup grounded in current best practices.
-allowed-tools: Read, Grep, Glob, Edit(**/CLAUDE.md), Edit(.claude/**), Edit(.githooks/**), Edit(.github/workflows/**), Edit(scripts/sync-config-table.js), Edit(.husky/pre-commit), Edit(AGENTS.md), Edit(.mcp.json), Edit(.gitignore), Edit(.claudeignore), Edit(scripts/sync-config-table.sh), Write(CLAUDE.md), Write(.claude/**), Write(.githooks/**), Write(.husky/pre-commit), Write(.gitignore), Write(.claudeignore), Write(.github/workflows/**), Write(scripts/sync-config-table.sh), Write(scripts/sync-config-table.js), Bash(git rev-parse:*), Bash(git log:*), Bash(git config core.hooksPath:*), Bash(jq:*), Bash(bash scripts/sync-config-table.sh), Bash(test -f:*), Bash(wc:*), Bash(date +%Y-%m-%d), Bash(chmod +x .githooks/pre-commit), Bash(chmod +x scripts/sync-config-table.sh)
+allowed-tools: Read, Grep, Glob, Edit(**/CLAUDE.md), Edit(.claude/**), Edit(.githooks/**), Edit(.github/workflows/**), Edit(scripts/sync-config-table.js), Edit(.husky/pre-commit), Edit(AGENTS.md), Edit(.mcp.json), Edit(.gitignore), Edit(scripts/sync-config-table.sh), Write(CLAUDE.md), Write(.claude/**), Write(.githooks/**), Write(.husky/pre-commit), Write(.gitignore), Write(.github/workflows/**), Write(scripts/sync-config-table.sh), Write(scripts/sync-config-table.js), Bash(git rev-parse:*), Bash(git log:*), Bash(git config core.hooksPath:*), Bash(jq:*), Bash(bash scripts/sync-config-table.sh), Bash(test -f:*), Bash(wc:*), Bash(date +%Y-%m-%d), Bash(chmod +x .githooks/pre-commit), Bash(chmod +x scripts/sync-config-table.sh)
 argument-hint: "[optional: brief project description]"
 ---
 
@@ -64,6 +64,7 @@ Always include `permissions.deny` for sensitive files. Adapt the patterns to wha
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
+    "ask": ["Bash(git push*)", "Bash(git -C * push*)"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.local)",
@@ -81,7 +82,9 @@ Always include `permissions.deny` for sensitive files. Adapt the patterns to wha
 }
 ```
 
-**Do not use a broad `Read(./.env.*)` deny.** That glob also matches example and template files like `.env.example`, `.env.sample`, `.env.template`, `.env.dist`, and `example.env`. Those hold no secrets and exist to be read and documented — blocking them stalls development. Claude Code evaluates `deny` before `ask` before `allow`, and `Read()` rules have no negation, so a denied path can never be re-allowed: an `allow(./.env.example)` rule cannot override a matching deny. The deny list must therefore enumerate the real secret-bearing variants and leave example files unmatched. To get full `.env.*` coverage _with_ the example carve-out, pair this with the PreToolUse hook in the Hooks section below.
+**Prefer an enumerated deny list over a broad `Read(./.env.*)`.** The broad glob also matches example and template files (`.env.example`, `.env.sample`, `.env.template`, `.env.dist`, `example.env`), which hold no secrets and should stay readable. Evaluation order is deny → ask → allow, so an `allow` rule can never re-open a denied path. The current permissions docs describe gitignore-style negation for deny rules (e.g. `Read(*.env)` followed by `Read(!sample.env)`), but it is version-dependent and hasn't been verified for this skill — so enumerate the real secret-bearing variants and pair the list with the PreToolUse guard below for full `.env.*` coverage with the example carve-out. Read deny rules also cover `cat`/`head`/`tail` on a named file in Bash, but not `grep -r` or scripts that open files themselves.
+
+`Bash(curl:*)`, `Bash(wget:*)` and `Bash(rm -rf:*)` deny rules only stop the usual invocation (`/usr/bin/curl` or `sh -c 'curl …'` slip past) — they are guard rails, not a security boundary. Use the sandbox when the restriction must hold. The `ask` rule makes `git push` always prompt, even in `auto` mode.
 
 Adjust deny rules based on what you found:
 
@@ -128,18 +131,18 @@ If no formatter is detected, skip the hook — don't guess. Note it in the summa
 
 For formatter hooks the `|| true` suffix is mandatory — a formatter must never crash Claude Code or block an edit. Security hooks are the exception (see below): they must fail closed, so they deliberately omit `|| true` and exit non-zero to block.
 
-**PreToolUse — secret-file guard (recommended).** This gives the broad `.env` / `.env.*` coverage the deny list deliberately avoids, while carving out example files. It checks the carve-out first, then blocks any `.env`/`.env.*` basename:
+**PreToolUse — secret-file guard (recommended).** This gives the broad `.env` / `.env.*` coverage the deny list deliberately avoids, while carving out example files. Write it to `.claude/guard-secret-files.sh` and register it for `Read|Edit|Write`:
 
 ```json
 {
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Read|Edit",
+        "matcher": "Read|Edit|Write",
         "hooks": [
           {
             "type": "command",
-            "command": "file=$(jq -r '.tool_input.file_path // empty'); base=${file##*/}; case \"$base\" in *.example|*.sample|*.template|*.dist|example.env|sample.env) exit 0;; esac; case \"$base\" in .env|.env.*) echo \"Blocked: $base may contain secrets\" >&2; exit 2;; esac; exit 0"
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/guard-secret-files.sh"
           }
         ]
       }
@@ -148,17 +151,36 @@ For formatter hooks the `|| true` suffix is mandatory — a formatter must never
 }
 ```
 
-`.env`, `.env.local`, and `.env.production.local` are blocked (exit 2); `.env.example`, `example.env`, `.env.sample`, and `.env.dist` stay readable. Do **not** append `|| true` here — a security hook must block on the secret path, not pass silently. The enumerated `permissions.deny` list above is the backstop if this hook ever fails open (e.g. `jq` not installed). The hook requires `jq`.
+```bash
+#!/usr/bin/env bash
+# PreToolUse: blocks reads/edits/writes of secret .env files; allows .env.example and similar templates.
+command -v jq >/dev/null 2>&1 || { echo "Blocked: jq is required to check file paths" >&2; exit 2; }
+input=$(cat)
+f=$(echo "$input" | jq -r '.tool_input.file_path // .tool_input.path // ""' 2>/dev/null)
+b=$(basename "$f")
+case "$b" in
+  *.example|*.sample|*.template|*.dist|example.env|sample.env) exit 0 ;;
+esac
+case "$b" in
+  .env|.env.*)
+    echo "Blocked: $b matches secret env-file pattern" >&2
+    exit 2
+    ;;
+esac
+exit 0
+```
+
+The hook must exit **2** to block — any other non-zero code is a non-blocking error and the tool call proceeds. It fails closed: without `jq` it blocks instead of passing silently. Do **not** append `|| true` to it. `jq` is a prerequisite.
 
 ### Environment variables
 
-Don't set `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` by default. It only affects _proactive_ compaction, which itself only triggers under specific conditions: cloud sessions, `CLAUDE_CODE_AUTO_COMPACT_WINDOW` being set, or specific model versions without extended context. On a typical local session on the current default model, proactive compaction already applies at the model's own default threshold — the override is very likely a no-op there, so recommending it as a blanket cost-optimization default is misleading. Only mention it as a niche, session/model-specific tuning if the user is running cloud sessions or an older model configuration where it demonstrably applies — never as an unconditional recommendation.
+Don't set `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` by default. It can only _lower_ the compaction threshold and only applies in sessions that compact before the model's context limit, so on a typical local session it is likely a no-op. Mention it only as niche tuning for such sessions.
 
-Include `MAX_THINKING_TOKENS: "10000"` as a cost-optimization default (down from the model's default cap of 31999). This lowers the _cap_ on thinking tokens per response — actual savings depend on how much of the budget a given task would otherwise use, so avoid stating a specific percentage.
+Don't set `MAX_THINKING_TOKENS`. Current models (Opus 4.7+, Sonnet 5+, Haiku 5.5, Fable) always use adaptive reasoning and ignore it; it only acts as a fixed budget on Opus/Sonnet 4.6 with adaptive reasoning disabled.
 
-Include `CLAUDE_CODE_SUBAGENT_MODEL: "haiku"` to route subagent work to a cheaper model by default — meaningfully lowers exploration/subagent costs since Haiku pricing is a fraction of Sonnet/Opus. Avoid citing a specific savings percentage; it varies by workload.
+Optionally include `CLAUDE_CODE_SUBAGENT_MODEL: "haiku"` to route subagent work to a cheaper model. Avoid citing a savings percentage; it varies by workload, and the variable overrides every subagent's own `model:` frontmatter.
 
-Also flag (as advisory text, not a file to write) the `alwaysThinkingEnabled` and `effortLevel` settings in `~/.claude/settings.json` — these are usually user-level, not project-level, but they control thinking budget more directly than `MAX_THINKING_TOKENS` and interact with it. Recommend leaving `alwaysThinkingEnabled` unset/`false` and `effortLevel` at its default (`medium`) unless the user has a specific need for deeper reasoning on every turn: `alwaysThinkingEnabled: true` combined with a high `effortLevel` substantially increases token usage per turn and can make context fill (and any compaction) happen far sooner than expected.
+Advisory only (not a file to write): `alwaysThinkingEnabled` defaults to on, so `true` changes nothing — only `false` has an effect. `effortLevel` (`low`, `medium`, `high`, `xhigh`; unset by default) controls reasoning depth per turn; higher levels fill context faster. Leave both alone unless the user has a specific need.
 
 ### Domain context folder
 
@@ -193,7 +215,7 @@ Register each context file in the `## Context files` table in CLAUDE.md (see Ste
 
 When Claude Code starts in any subfolder, it reads CLAUDE.md files up the directory tree, so a session in `campaigns/product-xy/june-2026/` automatically gets company context (via root CLAUDE.md) plus campaign context (via the local CLAUDE.md). Skills invoked in that session inherit all of it without hard-coded absolute paths to shared files. Guide the user to create and maintain CLAUDE.md files at each level where the context meaningfully changes as the project structure grows.
 
-**Claude Design handoffs:** If the project uses Claude Design (Anthropic's visual design tool), direct the user to place Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/) in `context/design/` — not the project root. This keeps handoff snapshots versioned alongside the codebase without cluttering the root. `DESIGN.md` is different: it is a persistent, project-wide design system spec (YAML tokens + Markdown rationale) that lives at the project root and is auto-read by Claude Code and other agents. If `DESIGN.md` already exists or is being added, wire it into CLAUDE.md with `@DESIGN.md **Read when:** building or editing any UI component` — do not copy its contents into `context/`.
+**Claude Design handoffs:** If the project uses Claude Design (Anthropic's visual design tool), direct the user to place Claude Design handoff artifacts (PROMPT.md, design-notes.md, screenshots/) in `context/design/` — not the project root. This keeps handoff snapshots versioned alongside the codebase without cluttering the root. `DESIGN.md` is different: it is a persistent, project-wide design system spec (YAML tokens + Markdown rationale) that lives at the project root and is auto-read by Claude Code and other agents. If `DESIGN.md` already exists or is being added, import it from CLAUDE.md with `@DESIGN.md` (or, if it is large, load it via a `.claude/rules/` file with `paths:` globs for UI files) — do not copy its contents into `context/`.
 
 ## Step 3: Create CLAUDE.md
 
@@ -243,11 +265,10 @@ section is created, and keep it if the section is edited later.
 
 ## References
 
-<Optional. Use progressive disclosure for large reference docs that are not domain
-context files: style guides, OpenSpec, architecture docs, DESIGN.md.
+<Optional. `@path` imports are expanded into context together with this file — they do NOT save tokens. Use them only for files needed in every session (e.g. AGENTS.md, a short DESIGN.md). For material needed only sometimes, use `.claude/rules/<topic>.md` with `paths:` frontmatter (loads when Claude touches matching files) or a skill.
 
-@style-guide.md **Read when:** writing or editing articles
-@DESIGN.md **Read when:** building or editing any UI component
+@AGENTS.md
+@DESIGN.md
 
 Only include this section if such files exist. Do not put context/ files here —
 they belong in the Context files table above.>
@@ -285,7 +306,7 @@ Rules for writing CLAUDE.md:
 
 Only create this if you have evidence that other AI coding tools are used (e.g., `.codex/`, `.gemini/`, `.github/copilot/`, cursor-related configs, or the user mentions it).
 
-AGENTS.md is the vendor-neutral standard read by Codex, Amp, Cursor, Copilot, and others. It demonstrably reduces runtime (~29%) and output token consumption (~17%).
+AGENTS.md is the vendor-neutral standard read by Codex, Amp, Cursor, Copilot, and others. Claude Code (2.1.277+) reads it natively only when no CLAUDE.md exists, so keep a CLAUDE.md that imports it.
 
 If created, keep it focused on universal concerns: setup commands, architecture boundaries, code style rules, testing conventions, and safety rules. Then reference it from CLAUDE.md via `@AGENTS.md`.
 
@@ -314,14 +335,12 @@ If Step 1 found a git repo with a configured remote, ask once:
 
 > "Do you work on this repo from multiple computers and sometimes forget to `git pull` before starting a session? I can set up an automatic fetch + fast-forward at the start of every session — it never merges or rebases, and if history has diverged it skips with a message instead of touching anything. This is a personal setting (not shared with collaborators). Enable it?"
 
-- If **yes**: create or update `.claude/settings.local.json` with `{"env": {"CC_CONFIG_AUTO_GIT_PULL": "true"}}` (merge into an existing `env` block, don't clobber other keys). The bundled `auto-git-pull.sh` `SessionStart` hook (declared in the plugin's own `hooks.json`, no project-level wiring needed) reads this flag. Confirm `.claude/settings.local.json` is covered by `.gitignore` (see Step 5a) so the flag stays machine-local.
+- If **yes**: create or update `.claude/settings.local.json` with `{"env": {"CC_CONFIG_AUTO_GIT_PULL": "true"}}` (merge into an existing `env` block, don't clobber other keys). The bundled `auto-git-pull.sh` `SessionStart` hook (declared in the plugin's own `hooks.json`, no project-level wiring needed) reads this flag. Confirm `.claude/settings.local.json` is covered by `.gitignore` (see Step 5) so the flag stays machine-local.
 - If **no** or the project has no remote yet: skip without mention in the summary.
 
 Do not add this file's contents to the Key Config Files table in Step 6 — `.claude/settings.local.json` is gitignored and personal, not part of the tracked config surface.
 
-## Step 5: Update .gitignore and create .claudeignore
-
-### 5a: Update .gitignore
+## Step 5: Update .gitignore
 
 Append these lines if they're not already present:
 
@@ -331,29 +350,7 @@ Append these lines if they're not already present:
 .claude/local.md
 ```
 
-### 5b: Create .claudeignore (if the repo has large unreadable directories)
-
-`.claudeignore` follows `.gitignore` syntax and tells Claude Code which paths to skip entirely when indexing the project. Every excluded directory reduces the invisible token overhead that accumulates before the user types anything.
-
-Create `.claudeignore` if you detected any of the following in Step 1:
-
-- Build output: `dist/`, `build/`, `.next/`, `out/`, `target/`, `_site/`
-- Dependency trees: `node_modules/`, `vendor/`, `.venv/`, `venv/`
-- Test coverage reports: `coverage/`, `.nyc_output/`
-- Large binary or media asset folders: anything with predominantly images, videos, or binaries
-
-Example for a typical JS/TS project:
-
-```
-node_modules/
-dist/
-.next/
-coverage/
-```
-
-Adapt to what you actually found — don't create the file if the repo is small and tidy, and don't add entries speculatively. If the project is too empty to judge, note it in the Step 7 summary as something to add once the repo grows.
-
-Add `.claudeignore` to the Key Config Files table in Step 6 if created.
+Claude Code has no documented ignore-file mechanism (`.claudeignore` is not a supported feature). To keep Claude away from paths, use `permissions.deny` rules on `Read`; dependency and build directories are already skipped by Glob/Grep via `.gitignore`.
 
 ## Step 6: Create Key Config Files table auto-sync
 
@@ -427,7 +424,7 @@ After creating all files, give the user a concise summary:
 2. Note any TODO placeholders that need filling in once the project takes shape.
 3. Mention what was intentionally left out and why (e.g., "No PostToolUse hook yet because no formatter was detected — add one once you pick a formatter.").
 4. Remind the user of five high-leverage next steps:
-   - Run `/context` in a fresh session immediately after setup to check startup token overhead. If it exceeds ~10,000 tokens before sending a single message, something is loading too much — oversized CLAUDE.md, too many unconditional context imports, or a large number of MCP tools are common causes.
+   - Run `/context` in a fresh session immediately after setup to check startup token overhead. If it exceeds ~10,000 tokens before sending a single message, something is loading too much — oversized CLAUDE.md, `@`-imports (they load eagerly), or a large number of MCP tools are common causes. `/doctor prompt-audit` can also review CLAUDE.md, rules and skills.
    - Add test/build/lint commands to CLAUDE.md once they exist.
    - Run `/auditing-config` after the project has some code to get a project-aware configuration pass.
    - Consider adding MCP servers to `.mcp.json` as needs arise (Context7 for docs, GitHub for PRs, etc.).

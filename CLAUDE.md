@@ -8,7 +8,6 @@ Reusable Claude Code skills for configuration management, distributed as a Claud
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `.claude/format-markdown.sh`                             | PostToolUse hook: formats Markdown files with prettier after edits                                |
 | `.claude/guard-secret-files.sh`                          | PreToolUse hook: blocks reads/edits/writes of secret .env files                                   |
-| `.claudeignore`                                          | Paths excluded from Claude Code indexing                                                          |
 | `CLAUDE.md`                                              | Project instructions, loaded every message                                                        |
 | `.claude/settings.json`                                  | Permissions, hooks, environment variables                                                         |
 | `.githooks/pre-commit`                                   | Secret scanning (gitleaks) + CLAUDE.md table sync                                                 |
