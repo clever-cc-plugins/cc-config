@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sync-config-table-version: 9
+# sync-config-table-version: 10
 # This is the canonical copy, distributed into other projects by /bootstrapping-config and
 # refreshed in place by /auditing-config's version-drift check. Its scan logic is kept in sync
 # with cc-config's own dogfood copy at scripts/sync-config-table.sh, repo root (only this header
@@ -160,7 +160,7 @@ done
 config_files=("${filtered_files[@]}")
 
 # Sort config files, dropping duplicates that overlapping scans may have added
-mapfile -t sorted_files < <(printf '%s\n' "${config_files[@]}" | sort -u)
+mapfile -t sorted_files < <(printf '%s\n' "${config_files[@]}" | LC_ALL=C sort -u)
 
 # Drop paths listed in the key-config-excluded block (see header comment).
 # Format per line: <path> — <reason> — <date>; only the path before the first
