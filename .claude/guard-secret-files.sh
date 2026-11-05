@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # PreToolUse: blocks reads/edits/writes of secret .env files; allows .env.example and similar templates.
+command -v jq >/dev/null 2>&1 || { echo "Blocked: jq is required to check file paths" >&2; exit 2; }
 input=$(cat)
 f=$(echo "$input" | jq -r '.tool_input.file_path // .tool_input.path // ""' 2>/dev/null)
 b=$(basename "$f")
