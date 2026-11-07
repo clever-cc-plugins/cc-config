@@ -178,7 +178,7 @@ check every audit:
 - Are sensitive files protected by `permissions.deny`? At minimum the real secret-bearing env files (`.env`, `.env.local`, `.env.*.local`, `.env.development`, `.env.production`, `.env.staging`, `.env.test`) and `secrets/**`.
 - **Flag a broad `Read(.env.*)` or `Read(./.env.*)` deny rule** unless it is followed by a negation carve-out for example files (e.g. `Read(!.env.example)`; the docs describe gitignore-style `!` negation in deny lists, but it is version-dependent — verify before relying on it). Without a carve-out the glob blocks `.env.example`/`.env.sample`/`.env.template`/`.env.dist`/`example.env`, which hold no secrets, and an `allow` can never re-open a denied path (deny → ask → allow). The safe default remains the enumerated list above plus the PreToolUse secret-file guard.
 - Read deny rules cover `cat`/`head`/`tail` on a named file in Bash but not `grep -r` or scripts that open files themselves; `Bash(curl:*)`/`Bash(wget:*)` denies miss `/usr/bin/curl` and `sh -c`. Treat them as guard rails, not a boundary — suggest the sandbox only if the user needs a real one.
-- Is `git push` in `permissions.ask` (so it prompts even in `auto` mode), and are `allow` entries named git subcommands (`Bash(git status *)`, …) rather than a blanket `Bash(git *)`, which would also approve pushes via aliases or `git -c`?
+- Does a `permissions.ask` rule for `git push` exist? That is the user's choice, never a finding: it forces a prompt even in `auto` and `bypassPermissions` mode. Only if `ask` has a push rule, check that `allow` uses named git subcommands (`Bash(git status *)`, …) rather than a blanket `Bash(git *)`, which would approve pushes the `ask` rule can't match (aliases, `git -c`). Without an `ask` rule a blanket `Bash(git *)` is harmless — don't flag it.
 - Is `permissions.deny` used instead of the deprecated `ignorePatterns`?
 - Are destructive commands blocked? (`rm -rf`, and consider network download commands unless specifically needed)
 - Are safe, frequently-used commands in `permissions.allow`? (reduces approval fatigue)
@@ -338,7 +338,7 @@ Using the metrics and findings gathered in Step 1–2, organize findings into th
 - Obsolete or ineffective env vars (`MAX_THINKING_TOKENS` on current models, `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` on plain local setups)
 - `.claudeignore` present (not a documented feature; likely no effect)
 - Broad `Read(.env.*)` deny without a negation carve-out, or a secret-file guard hook that fails open / omits `Write`
-- `git push` not in `permissions.ask`, or blanket `Bash(git *)` in `allow`
+- Blanket `Bash(git *)` in `allow` while `permissions.ask` has a `git push` rule (the blanket rule approves pushes the `ask` rule can't match)
 - Redundant content between files
 - Skills without proper frontmatter guards
 - Learnings entries that should be promoted to CLAUDE.md or a skill
@@ -372,6 +372,7 @@ Using the metrics and findings gathered in Step 1–2, organize findings into th
 - PDFs, DOCX files, or HTML pages referenced in CLAUDE.md or context files without Markdown equivalents: converting them saves significant tokens (HTML→Markdown ~90% reduction, PDF→Markdown ~65–70%, DOCX→Markdown ~33%). Tools like Pandoc, Docling, or `markitdown` convert in seconds. Flag any such files found in the registered context location or referenced via `@`-imports
 - Startup token overhead unmeasured: suggest `/context` in a fresh session (and `/doctor prompt-audit`) if CLAUDE.md is large or many imports/MCP servers are present
 - Headroom not installed but Python 3.10+ is available and the project runs locally (not only in remote/sandboxed sessions): offer it per [reference.md](reference.md) — unverified vendor savings figures live there; don't quote them as facts
+- No `git push` rule in `permissions.ask`: offer `"ask": ["Bash(git push*)"]` only as an optional safety net, and only add it on an explicit yes. Say that it prompts even with `--dangerously-skip-permissions`, and that `git -C <dir> push` isn't covered — a `git -C * push*` twin is not recommended because wildcards match the whole command text and so also prompt for harmless commands that merely mention `push`. If the user wants as few prompts as possible, don't push for it.
 - `CC_CONFIG_AUTO_GIT_PULL` not set and the project is a git repo with a configured remote: ask whether the user works on this repo from multiple machines and forgets to `git pull` before starting a session. If yes, offer to set `CC_CONFIG_AUTO_GIT_PULL=true` in the `env` block of `.claude/settings.local.json` (create the file if absent) so the bundled `auto-git-pull.sh` `SessionStart` hook fast-forwards the branch automatically, skipping (with a message) if history has diverged. Never enable this without asking, and never write it to the committed `.claude/settings.json`.
 
 Present the findings to the user as a concise list, grouped by category. For each finding, state: what the issue is, why it matters, and what you'd change. Ask for approval before making changes.

@@ -12,7 +12,7 @@
       "Bash(git switch *)",
       "Bash(chmod +x *)"
     ],
-    "ask": ["Bash(git push*)", "Bash(git -C * push*)"],
+    "ask": ["Bash(git push*)"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.local)",
