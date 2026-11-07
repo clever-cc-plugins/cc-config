@@ -64,7 +64,6 @@ Always include `permissions.deny` for sensitive files. Adapt the patterns to wha
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
-    "ask": ["Bash(git push*)"],
     "deny": [
       "Read(./.env)",
       "Read(./.env.local)",
@@ -84,7 +83,7 @@ Always include `permissions.deny` for sensitive files. Adapt the patterns to wha
 
 **Prefer an enumerated deny list over a broad `Read(./.env.*)`.** The broad glob also matches example and template files (`.env.example`, `.env.sample`, `.env.template`, `.env.dist`, `example.env`), which hold no secrets and should stay readable. Evaluation order is deny → ask → allow, so an `allow` rule can never re-open a denied path. The current permissions docs describe gitignore-style negation for deny rules (e.g. `Read(*.env)` followed by `Read(!sample.env)`), but it is version-dependent and hasn't been verified for this skill — so enumerate the real secret-bearing variants and pair the list with the PreToolUse guard below for full `.env.*` coverage with the example carve-out. Read deny rules also cover `cat`/`head`/`tail` on a named file in Bash, but not `grep -r` or scripts that open files themselves.
 
-`Bash(curl:*)`, `Bash(wget:*)` and `Bash(rm -rf:*)` deny rules only stop the usual invocation (`/usr/bin/curl` or `sh -c 'curl …'` slip past) — they are guard rails, not a security boundary. Use the sandbox when the restriction must hold. The `ask` rule makes `git push` always prompt, even in `auto` and `bypassPermissions` mode. It deliberately has no `git -C * push*` twin: wildcards match the whole command text, so that pattern also prompts for harmless commands that merely mention `push`. Leave the rule out if the user wants no push confirmation at all.
+`Bash(curl:*)`, `Bash(wget:*)` and `Bash(rm -rf:*)` deny rules only stop the usual invocation (`/usr/bin/curl` or `sh -c 'curl …'` slip past) — they are guard rails, not a security boundary. Use the sandbox when the restriction must hold. The template has no `ask` rule for `git push` on purpose: `ask` prompts even in `auto` and `bypassPermissions` mode, and its wildcards match the whole command text, so it also prompts for harmless commands that merely mention `push`. Add `"ask": ["Bash(git push*)"]` only if the user explicitly wants a push confirmation.
 
 Adjust deny rules based on what you found:
 
