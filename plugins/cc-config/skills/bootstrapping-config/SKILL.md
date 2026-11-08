@@ -13,7 +13,7 @@ You are setting up a Claude Code configuration from scratch. The project directo
 
 Every line in CLAUDE.md costs context tokens on every single message. Frontier models follow ~150–200 instructions reliably; the system prompt already uses ~50. That leaves ~100–150 slots before quality degrades across all rules. Configuration is a multiplier on everything Claude Code does — invest in it upfront, keep it lean, let automation compound.
 
-The single most impactful principle: give Claude a way to verify its work. If Claude has a feedback loop (tests, linters, type checkers), output quality doubles or triples.
+The single most impactful principle: give Claude a way to verify its work. If Claude has a feedback loop (tests, linters, type checkers), it can catch and fix its own mistakes before you see them.
 
 ## Step 0: Recall learnings
 
