@@ -17,7 +17,7 @@ The guiding question for every instruction in CLAUDE.md: "Would removing this li
 
 ## Step 0: Recall learnings
 
-If `.claude/learnings.md` exists, read all entries and apply them silently to inform this run. The `[skill-name]` tag on each entry is provenance only — all entries apply regardless of which skill wrote them. Do not announce that learnings were loaded.
+Read `../_shared/learnings-protocol.md` and follow its **Recall** section. The tag on each entry is provenance only — all entries apply regardless of which skill wrote them.
 
 If the file does not exist, proceed without mention.
 
@@ -283,16 +283,7 @@ If the project uses multiple AI tool directories:
 
 ### 2g: Learnings review
 
-If `.claude/learnings.md` exists:
-
-1. Read all entries.
-2. Group similar entries to identify recurring patterns (3+ similar corrections suggest a real gap in the config).
-3. For each recurring pattern, propose one of:
-   - Adding a concrete rule to CLAUDE.md (if it's a universal project convention).
-   - Adding it to an existing or new skill (if it's domain-specific or rarely needed).
-   - Adding it as a hook (if it's something that should happen deterministically, not by instruction).
-4. For one-off entries that don't recur, propose deleting them.
-5. Present the full list to the user grouped as "promote to config" vs "delete as one-off", with rationale for each. Wait for approval before changing anything.
+If `.claude/learnings.md` exists, review every entry under any tag. Read `../_shared/learnings-protocol.md` and follow its **Reviewing** section. Promotion targets: CLAUDE.md (a universal project convention), an existing or new skill (domain-specific or rarely needed), or a hook (something that should happen deterministically, not by instruction). Present the proposals to the user as "promote / keep / retire", with rationale for each. Wait for approval before changing anything.
 
 If `.claude/learnings.md` does not exist but CLAUDE.md also has no Learnings section, suggest adding the Learnings section to CLAUDE.md:
 
@@ -395,9 +386,8 @@ Make the approved changes. For each file modified:
 
 When applying learnings review results:
 
-- For entries promoted to CLAUDE.md or a skill, remove them from `.claude/learnings.md`.
-- For entries marked as one-off, remove them from `.claude/learnings.md`.
-- If all entries are processed, delete `.claude/learnings.md` entirely (it will be recreated naturally when the next correction occurs).
+- Remove promoted and retired entries from `.claude/learnings.md`; leave kept entries unchanged.
+- If no entries remain, delete `.claude/learnings.md` entirely (it will be recreated naturally when the next correction occurs).
 
 When resolving hook-manager conflicts:
 
@@ -430,7 +420,7 @@ After all changes:
 2. Report the new metrics: CLAUDE.md word count, number of active MCP servers, hooks configured, etc.
 3. Compare key metrics to before (e.g., "CLAUDE.md: 1,850 words → 480 words").
 4. Recompute the config health score from whatever findings remain unresolved and report the before/after (e.g. "Config health: 62/100 → 91/100").
-5. If learnings were reviewed: report how many entries were promoted, how many deleted, and how many remain.
+5. If learnings were reviewed: report how many entries were promoted, retired and kept.
 6. Note anything you deliberately left unchanged and why.
 7. Update the audit marker in CLAUDE.md so the bundled `SessionStart` staleness hook (see
    "Audit staleness reminder" below) has a fresh baseline to compare future commits against:
@@ -467,34 +457,13 @@ See "Common optimization patterns" in [reference.md](reference.md): CLAUDE.md �
 
 ## Feedback
 
-**Auto-store phase.** Before asking for feedback, review this run. For each qualifying observation, append one tagged line to `.claude/learnings.md` (create with standard header if missing). Skip entries promoted or deleted by 2g in this run:
-
-```text
-[cc-config:auditing-config] <concise fact about this project> — <YYYY-MM-DD>
-```
-
-Qualifies: something about this project that differs from what this skill assumes on a generic project; a suggestion the user explicitly accepted or rejected that deviates from skill defaults; a constraint or fact discovered that would change how this skill behaves next time.
-
-Does not qualify: standard skill behavior applied without deviation; facts already present in CLAUDE.md, AGENTS.md, or other config files; anything a reader could determine from the repo without this skill having run; facts semantically equivalent to any existing `.claude/learnings.md` entry — when in doubt, skip.
-
-Before appending, use Glob on `.claude/learnings.md` to check whether the file exists.
-
-Standard header when creating the file:
-
-```markdown
-# Learnings
-
-Corrections and observations collected during configuration sessions.
-Entries are tagged by skill and dated.
-
----
-```
+**Auto-store phase.** Read `../_shared/learnings-protocol.md` and follow its **Writing** section. Tag entries `[cc-config:auditing-config]`; the source is `inferred` unless the user said it. Skip entries promoted or retired by 2g in this run. Worth recording in this skill: a concise fact about this project that differs from what this skill assumes on a generic project; a suggestion the user explicitly accepted or rejected that deviates from skill defaults; a constraint or fact discovered that would change how this skill behaves next time.
 
 **Explicit feedback.** After the auto-store phase, ask:
 
 > "Did this optimization meet your expectations? If anything needs adjusting, share it here — or press Enter to finish."
 
-- If the user **provides a correction**: append it as a tagged entry using the same format and qualification criteria above. Confirm total entries written across both phases: "✓ N learning(s) saved to `.claude/learnings.md`."
-- If the user **confirms quality or skips**: if any entries were auto-stored, confirm "✓ N learning(s) auto-saved to `.claude/learnings.md`." Then exit. If nothing was stored, skip the confirmation and exit directly.
+- If the user provides a correction, record it per the protocol's **Writing** section with source `corrected`.
+- Then follow the protocol's **Confirming** section.
 
 > **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/auditing-config` periodically to promote recurring patterns into the configuration.
