@@ -466,4 +466,4 @@ See "Common optimization patterns" in [reference.md](reference.md): CLAUDE.md â†
 - If the user provides a correction, record it per the protocol's **Writing** section with source `corrected`.
 - Then follow the protocol's **Confirming** section.
 
-> **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/auditing-config` periodically to promote recurring patterns into the configuration.
+> **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/auditing-config` periodically to review learnings: promote, keep or retire them by source and relevance.
