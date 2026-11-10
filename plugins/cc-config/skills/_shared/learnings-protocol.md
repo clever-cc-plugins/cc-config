@@ -17,11 +17,11 @@ One line per entry, a blank line between entries:
   - `stated`: the user said it as a standing preference, rule or fact.
   - `corrected`: the user corrected an output. The entry records the corrected behaviour, not the mistake.
   - `inferred`: the skill concluded it from the run. The user has not confirmed it.
-- Entries without a source marker predate this protocol. Treat them as `stated`, and do not rewrite them only to add a marker.
+- Entries without a source marker predate this protocol. Treat them as `stated`, and do not rewrite them only to add a marker. Many were stored silently and may be old guesses, so a review judges their source from the wording.
 
 ## Recall
 
-Before any other work, read `.claude/learnings.md` in full if it exists. Apply the entries relevant to this run. When two entries conflict, `stated` and `corrected` beat `inferred`; between equal sources the newer date wins. Never announce this step. Mention an entry only when it changes what you do.
+Before any other work, read `.claude/learnings.md` in full if it exists. Apply the entries relevant to this run. When two entries conflict, `stated` and `corrected` beat `inferred`; between equal sources the newer date wins, and between equal sources and equal dates the line lower in the file wins. When an entry conflicts with `CLAUDE.md` or a registered context file, the file wins: the entry is stale, and a review should retire it. Never announce this step. Mention an entry only when it changes what you do.
 
 ## Writing
 
@@ -31,11 +31,11 @@ Before writing, compare the new observation with every existing entry, under any
 
 1. **An equivalent entry exists:** write nothing. If the new source is stronger (`stated` or `corrected` over `inferred`), update that entry's source and date in place instead.
 2. **The observation contradicts or updates an existing entry:**
-   - New source `stated` or `corrected`, or both `inferred`: replace the old line in place with the new entry. The new line carries the current skill's tag, even if the old line had another tag.
+   - New source `stated` or `corrected`, or both `inferred`: replace the old line in place with the new entry. The new line carries the current skill's tag, even if the old line had another tag. This is intended: the entry now belongs to the plugin that last confirmed it, so a review that filters by its own plugin's tags sees it only from then on (`auditing-config` reads every tag).
    - New source `inferred`, old entry `stated`, `corrected` or unmarked: keep the old entry and write nothing. If this run gave real reason to doubt it, ask the user before changing anything.
 3. **Otherwise:** append the new entry at the end of the file.
 
-Never leave two entries in the file that contradict each other.
+Locate a line you replace or update by its full text, so the edit cannot hit a similar line. Never leave two entries in the file that contradict each other.
 
 If the file does not exist, create it with this header first:
 
@@ -49,7 +49,7 @@ Observations and corrections collected by clever-cc-plugins skills. One entry pe
 
 ## Confirming
 
-At the end of the skill's feedback step, after the user has answered or skipped the feedback question, show every entry this run wrote or replaced, verbatim, in one block. Mark new entries with `+` and every changed entry (a replacement, or a source or date upgraded in place under Writing rule 1) with `~`, followed by the line it replaced:
+At the end of the skill's feedback step, after the user has answered or skipped the feedback question, show every entry this run wrote or replaced, including corrections recorded from the user's answer, verbatim, in one block. Mark new entries with `+` and every changed entry (a replacement, or a source or date upgraded in place under Writing rule 1) with `~`, followed by the line it replaced:
 
 ```text
 Saved to .claude/learnings.md:
@@ -67,7 +67,7 @@ Review skills (`session-wrap`, `learnings-promotion`, `auditing-config`) consoli
 1. Read the entries in scope, plus `CLAUDE.md` and the registered context files.
 2. Group entries that express the same underlying concern, however they are worded.
 3. Propose one action per group or single entry, stating the entry count, the sources and a one-line reason:
-   - **Promote:** a standing rule. That is any `stated` or `corrected` entry, or a group of two or more related entries that agree. For an unmarked entry the source is unknown: judge from its wording whether the user said it, and say so in the proposal. Frequency is a signal, not a threshold: one stated rule can qualify, and three unconfirmed inferences can still be wrong. Choose the narrowest target that reaches every run needing the rule: a skill's guidelines, a context file or a voice guide before `CLAUDE.md`, which every session loads.
+   - **Promote:** a standing rule. That is any `stated` or `corrected` entry, or a group of agreeing `inferred` entries that you judge still relevant and likely true; say why, because repetition alone does not make an inference true. For an unmarked entry the source is unknown: judge from its wording whether the user said it, and say so in the proposal. Frequency is a signal, not a threshold: one stated rule can qualify, and three unconfirmed inferences can still be wrong. Choose the narrowest target that reaches every run needing the rule: a skill's guidelines, a context file or a voice guide before `CLAUDE.md`, which every session loads.
    - **Keep:** still true and useful, but not yet a standing rule. Typically a single `inferred` entry.
    - **Retire:** already covered by `CLAUDE.md` or a context file (name the file), contradicted by one of them, superseded by a newer entry, or tied to a situation that is over.
 4. Apply nothing before the user decides each proposal: promote, keep or retire. Remove promoted and retired entries from `.claude/learnings.md`; leave kept entries unchanged. When no entries remain below the header, delete the file, or leave only the header if you cannot delete files.
