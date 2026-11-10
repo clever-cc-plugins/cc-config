@@ -284,8 +284,7 @@ they belong in the Context files table above.>
 
 ## Learnings
 
-When the user corrects a mistake or points out a recurring issue, append a one-line
-summary to .claude/learnings.md. Don't modify CLAUDE.md directly.
+When the user corrects a mistake or points out a recurring issue, record a one-line entry in .claude/learnings.md as `[claude:note] <observation> (corrected) — YYYY-MM-DD` (use `(stated)` when the user states a standing rule). If it contradicts an existing entry, replace that entry instead of adding a second one. Don't modify CLAUDE.md directly.
 
 ## Compact Instructions
 
@@ -438,7 +437,7 @@ After creating all files, give the user a concise summary:
    - Suggest documenting it in the project README's setup instructions.
 8. Explain the Learnings mechanism:
    - The skills automatically store project-specific observations to `.claude/learnings.md` at the end of each run and recall them at the start of the next — no manual action required.
-   - When the user corrects a mistake, Claude also appends a correction to `.claude/learnings.md` instead of modifying CLAUDE.md directly.
+   - When the user corrects a mistake, Claude also records a one-line correction in `.claude/learnings.md` (replacing a contradicted entry instead of stacking a second one) instead of modifying CLAUDE.md directly.
    - Running `/auditing-config` periodically reviews the file and proposes promoting, keeping or retiring entries by source and relevance.
 9. If the Key Config Files auto-sync was set up (Step 6), also mention: `cc-config`'s bundled `SessionStart` hook will automatically nudge to run `/auditing-config` once the project has drifted noticeably from today's baseline (default: 20+ commits or 14+ days with new activity) — no setup needed, it fires in any project the plugin is active in.
 10. Suggest committing the new config files to git.
