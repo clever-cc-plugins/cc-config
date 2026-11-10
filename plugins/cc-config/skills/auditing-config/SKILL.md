@@ -387,7 +387,7 @@ Make the approved changes. For each file modified:
 When applying learnings review results:
 
 - Remove promoted and retired entries from `.claude/learnings.md`; leave kept entries unchanged.
-- If no entries remain below the header, delete `.claude/learnings.md`, or leave only the header if you cannot delete files (it will be recreated naturally when the next correction occurs).
+- If no entries remain below the header, delete `.claude/learnings.md`, or leave only the header if you cannot delete files (it will be recreated when the next observation is recorded).
 
 When resolving hook-manager conflicts:
 

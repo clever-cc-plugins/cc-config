@@ -20,7 +20,7 @@ python3 -c "import sys; print('python-ok' if sys.version_info >= (3, 10) else 'p
    - _MCP mode_: look for a Headroom entry in `.mcp.json`. Verify it is still in the active server list; stale entries add tool-count overhead for nothing.
    - _Proxy/wrap mode_: `headroom wrap claude` or `headroom proxy --port 8787 --code-aware` must be run before each session. If this is not documented in CLAUDE.md (or a project README), note it — teammates will not know to start it.
 3. **Code-aware flag**: For code compression to activate, the proxy must be started with `--code-aware`. Without it, code files produce `tokens_saved: 0`. Flag as a note if the user is on proxy mode and this flag is not documented.
-4. **Learnings coexistence**: Headroom's `.headroom/CLAUDE.local.md` and cc-config's `.claude/learnings.md` serve different purposes and should both be kept. Headroom's file captures machine-local session patterns; cc-config's file captures explicit user corrections and is team-shared (committed to git, feeds the `auditing-config` promotion cycle). Do not consolidate them.
+4. **Learnings coexistence**: Headroom's `.headroom/CLAUDE.local.md` and cc-config's `.claude/learnings.md` serve different purposes and should both be kept. Headroom's file captures machine-local session patterns; cc-config's file captures stated preferences, corrections and marked inferences and is team-shared (committed to git, feeds the `auditing-config` promotion cycle). Do not consolidate them.
 
 **If Headroom is not installed and Python 3.10+ is available:**
 
