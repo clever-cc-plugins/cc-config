@@ -20,7 +20,7 @@ python3 -c "import sys; print('python-ok' if sys.version_info >= (3, 10) else 'p
    - _MCP mode_: look for a Headroom entry in `.mcp.json`. Verify it is still in the active server list; stale entries add tool-count overhead for nothing.
    - _Proxy/wrap mode_: `headroom wrap claude` or `headroom proxy --port 8787 --code-aware` must be run before each session. If this is not documented in CLAUDE.md (or a project README), note it — teammates will not know to start it.
 3. **Code-aware flag**: For code compression to activate, the proxy must be started with `--code-aware`. Without it, code files produce `tokens_saved: 0`. Flag as a note if the user is on proxy mode and this flag is not documented.
-4. **Learnings coexistence**: Headroom's `.headroom/CLAUDE.local.md` and cc-config's `.claude/learnings.md` serve different purposes and should both be kept. Headroom's file captures machine-local session patterns; cc-config's file captures explicit user corrections and is team-shared (committed to git, feeds the `auditing-config` promotion cycle). Do not consolidate them.
+4. **Learnings coexistence**: Headroom's `.headroom/CLAUDE.local.md` and cc-config's `.claude/learnings.md` serve different purposes and should both be kept. Headroom's file captures machine-local session patterns; cc-config's file captures stated preferences, corrections and marked inferences and is team-shared (committed to git, feeds the `auditing-config` promotion cycle). Do not consolidate them.
 
 **If Headroom is not installed and Python 3.10+ is available:**
 
@@ -29,7 +29,6 @@ Add to "Nice to have." Do **not** add if Python is unavailable or below 3.10, or
 **If Python is unavailable or below 3.10:**
 
 Skip. Do not mention Headroom.
-
 
 ## Audit staleness reminder
 
@@ -46,7 +45,6 @@ including in repos that don't use `cc-config` at all (it only speaks up if it al
 This step is what keeps that hook's comparison meaningful — without a fresh marker, every
 session in an active repo would eventually trip the threshold and nag regardless of how
 recently an audit actually ran.
-
 
 ## Common optimization patterns
 
@@ -89,8 +87,7 @@ If OpenSpec is present, CLAUDE.md should reference it rather than duplicate proj
 If CLAUDE.md says "always run prettier after editing" — that's a hook, not an instruction. Replace the instruction with a deterministic PostToolUse hook and remove the line from CLAUDE.md.
 
 **Learnings graduation:**
-When `.claude/learnings.md` has accumulated entries, recurring patterns graduate into CLAUDE.md rules, skills, or hooks. One-off corrections get deleted. The file stays lean or gets removed entirely until the next correction cycle.
+When `.claude/learnings.md` has accumulated entries, standing rules (stated or corrected entries, or related groups) graduate into CLAUDE.md rules, skills, or hooks. Superseded or covered entries are retired; the rest stay. The file stays lean or gets removed entirely until the next correction cycle.
 
 **Hook-manager migration for sync-config-table:**
 When a project gains Husky or another hook manager after `/bootstrapping-config` was used, the `.githooks/pre-commit` goes silent because `core.hooksPath` is taken over. Migrate the sync script into the active hook manager's pre-commit hook and remove the now-dead `.githooks/` directory.
-

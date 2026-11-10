@@ -49,5 +49,4 @@ When compacting, preserve: current branch and list of modified plugins/skills.
 
 ## Learnings
 
-When the user corrects a mistake or points out a recurring issue, append a one-line
-summary to .claude/learnings.md. Don't modify CLAUDE.md directly.
+When the user corrects a mistake or points out a recurring issue, record a one-line entry in .claude/learnings.md as `[claude:note] <observation> (corrected) — YYYY-MM-DD` (use `(stated)` when the user states a standing rule). If it contradicts an existing entry, replace that entry instead of adding a second one. Don't modify CLAUDE.md directly.

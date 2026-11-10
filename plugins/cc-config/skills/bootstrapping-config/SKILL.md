@@ -17,7 +17,7 @@ The single most impactful principle: give Claude a way to verify its work. If Cl
 
 ## Step 0: Recall learnings
 
-If `.claude/learnings.md` exists, read all entries and apply them silently to inform this run. The `[skill-name]` tag on each entry is provenance only — all entries apply regardless of which skill wrote them. Do not announce that learnings were loaded.
+Read `../_shared/learnings-protocol.md` and follow its **Recall** section. The tag on each entry is provenance only — all entries apply regardless of which skill wrote them.
 
 If the file does not exist, proceed without mention.
 
@@ -284,8 +284,7 @@ they belong in the Context files table above.>
 
 ## Learnings
 
-When the user corrects a mistake or points out a recurring issue, append a one-line
-summary to .claude/learnings.md. Don't modify CLAUDE.md directly.
+When the user corrects a mistake or points out a recurring issue, record a one-line entry in .claude/learnings.md as `[claude:note] <observation> (corrected) — YYYY-MM-DD` (use `(stated)` when the user states a standing rule). If it contradicts an existing entry, replace that entry instead of adding a second one. Don't modify CLAUDE.md directly.
 
 ## Compact Instructions
 
@@ -438,8 +437,8 @@ After creating all files, give the user a concise summary:
    - Suggest documenting it in the project README's setup instructions.
 8. Explain the Learnings mechanism:
    - The skills automatically store project-specific observations to `.claude/learnings.md` at the end of each run and recall them at the start of the next — no manual action required.
-   - When the user corrects a mistake, Claude also appends a correction to `.claude/learnings.md` instead of modifying CLAUDE.md directly.
-   - Running `/auditing-config` periodically reviews the file and proposes promoting recurring patterns into CLAUDE.md, skills, or hooks; one-off entries get deleted.
+   - When the user corrects a mistake, Claude also records a one-line correction in `.claude/learnings.md` (replacing a contradicted entry instead of stacking a second one) instead of modifying CLAUDE.md directly.
+   - Running `/auditing-config` periodically reviews the file and proposes promoting, keeping or retiring entries by source and relevance.
 9. If the Key Config Files auto-sync was set up (Step 6), also mention: `cc-config`'s bundled `SessionStart` hook will automatically nudge to run `/auditing-config` once the project has drifted noticeably from today's baseline (default: 20+ commits or 14+ days with new activity) — no setup needed, it fires in any project the plugin is active in.
 10. Suggest committing the new config files to git.
 
@@ -454,34 +453,13 @@ After creating all files, give the user a concise summary:
 
 ## Feedback
 
-**Auto-store phase.** Before asking for feedback, review this run. For each qualifying observation, append one tagged line to `.claude/learnings.md` (create with standard header if missing):
-
-```text
-[cc-config:bootstrapping-config] <concise fact about this project> — <YYYY-MM-DD>
-```
-
-Qualifies: something about this project that differs from what this skill assumes on a generic project; a suggestion the user explicitly accepted or rejected that deviates from skill defaults; a constraint or fact discovered that would change how this skill behaves next time.
-
-Does not qualify: standard skill behavior applied without deviation; facts already present in CLAUDE.md, AGENTS.md, or other config files; anything a reader could determine from the repo without this skill having run; facts semantically equivalent to any existing `.claude/learnings.md` entry — when in doubt, skip.
-
-Before appending, use Glob on `.claude/learnings.md` to check whether the file exists.
-
-Standard header when creating the file:
-
-```markdown
-# Learnings
-
-Corrections and observations collected during configuration sessions.
-Entries are tagged by skill and dated.
-
----
-```
+**Auto-store phase.** Read `../_shared/learnings-protocol.md` and follow its **Writing** section. Tag entries `[cc-config:bootstrapping-config]`; the source is `inferred` unless the user said it. Worth recording in this skill: a concise fact about this project that differs from what this skill assumes on a generic project; a suggestion the user explicitly accepted or rejected that deviates from skill defaults; a constraint or fact discovered that would change how this skill behaves next time.
 
 **Explicit feedback.** After the auto-store phase, ask:
 
 > "Did this configuration meet your expectations? If anything needs adjusting, share it here — or press Enter to finish."
 
-- If the user **provides a correction**: append it as a tagged entry using the same format and qualification criteria above. Confirm total entries written across both phases: "✓ N learning(s) saved to `.claude/learnings.md`."
-- If the user **confirms quality or skips**: if any entries were auto-stored, confirm "✓ N learning(s) auto-saved to `.claude/learnings.md`." Then exit. If nothing was stored, skip the confirmation and exit directly.
+- If the user provides a correction, record it per the protocol's **Writing** section with source `corrected`.
+- Then follow the protocol's **Confirming** section.
 
-> **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/auditing-config` periodically to promote recurring patterns into the configuration.
+> **Note:** Learnings are automatically recalled at the start of the next skill run. Run `/auditing-config` periodically to review learnings: promote, keep or retire them by source and relevance.
