@@ -49,7 +49,7 @@ Observations and corrections collected by clever-cc-plugins skills. One entry pe
 
 ## Confirming
 
-At the end of the skill's feedback step, after the user has answered or skipped the feedback question, show every entry this run wrote or replaced, verbatim, in one block. Mark new entries with `+` and replacements with `~`, followed by the line they replaced:
+At the end of the skill's feedback step, after the user has answered or skipped the feedback question, show every entry this run wrote or replaced, verbatim, in one block. Mark new entries with `+` and every changed entry (a replacement, or a source or date upgraded in place under Writing rule 1) with `~`, followed by the line it replaced:
 
 ```text
 Saved to .claude/learnings.md:
@@ -67,7 +67,7 @@ Review skills (`session-wrap`, `learnings-promotion`, `auditing-config`) consoli
 1. Read the entries in scope, plus `CLAUDE.md` and the registered context files.
 2. Group entries that express the same underlying concern, however they are worded.
 3. Propose one action per group or single entry, stating the entry count, the sources and a one-line reason:
-   - **Promote:** a standing rule. That is any `stated` or `corrected` entry, or a group of two or more related entries. For an unmarked entry the source is unknown: judge from its wording whether the user said it, and say so in the proposal. Frequency is a signal, not a threshold: one stated rule can qualify, and three unconfirmed inferences can still be wrong. Choose the narrowest target that reaches every run needing the rule: a skill's guidelines, a context file or a voice guide before `CLAUDE.md`, which every session loads.
+   - **Promote:** a standing rule. That is any `stated` or `corrected` entry, or a group of two or more related entries that agree. For an unmarked entry the source is unknown: judge from its wording whether the user said it, and say so in the proposal. Frequency is a signal, not a threshold: one stated rule can qualify, and three unconfirmed inferences can still be wrong. Choose the narrowest target that reaches every run needing the rule: a skill's guidelines, a context file or a voice guide before `CLAUDE.md`, which every session loads.
    - **Keep:** still true and useful, but not yet a standing rule. Typically a single `inferred` entry.
    - **Retire:** already covered by `CLAUDE.md` or a context file (name the file), contradicted by one of them, superseded by a newer entry, or tied to a situation that is over.
-4. Apply nothing before the user decides each proposal: promote, keep or retire. Remove promoted and retired entries from `.claude/learnings.md`; leave kept entries unchanged. Delete the file when no entries remain below the header.
+4. Apply nothing before the user decides each proposal: promote, keep or retire. Remove promoted and retired entries from `.claude/learnings.md`; leave kept entries unchanged. When no entries remain below the header, delete the file, or leave only the header if you cannot delete files.
