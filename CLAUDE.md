@@ -27,7 +27,7 @@ Reusable Claude Code skills for configuration management, distributed as a Claud
 .claude/learnings.md — already described in ## Learnings section below; a table row would just duplicate that with a stale TODO placeholder — 2026-07-29
 -->
 
-<!-- cc-config: last-optimize-run: 2026-11-05 cfc7db0b834805482854d4b866a4d5ee112ed28c -->
+<!-- cc-config: last-optimize-run: 2026-11-12 4db5e6cfd765a5e5fe1bc79eb98e4c0ba8d2529c -->
 
 ## Setup
 
